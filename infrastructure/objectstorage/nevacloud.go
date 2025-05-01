@@ -1,15 +1,5 @@
 package objectstorage
 
-/*
-Brief
-disini kita akan membuat koneksi ke object storage s3 compatible
-S3_ENDPOINT=https://s3.nevaobjects.id
-S3_ACCESS_KEY_ID=KQ4P6MZKG44VYPHFOGFG
-S3_SECRET_ACCESS_KEY=URfrkNzPQS79x78m8EKo5iaETGWevG6Rg0h10NPc
-S3_BUCKET=emploman
-diatas adalah contoh credential yang kita dapatkan dari provider
-*/
-
 import (
 	"fmt"
 
