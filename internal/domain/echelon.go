@@ -16,5 +16,5 @@ type EchelonInterface interface {
 	Save(echelon *Echelon) (*Echelon, error)
 	Update(echelon *Echelon) (*Echelon, error)
 	Delete(id int) error
-	FindByCode(code string) (*Echelon, error)
+	FindByCode(code string) ([]Echelon, error)
 }

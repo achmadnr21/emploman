@@ -17,5 +17,5 @@ type GradeInterface interface {
 	Save(grade *Grade) (*Grade, error)
 	Update(grade *Grade) (*Grade, error)
 	Delete(id int) error
-	FindByCode(code string) (*Grade, error)
+	FindByCode(code string) ([]Grade, error)
 }

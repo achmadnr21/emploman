@@ -73,15 +73,20 @@ func (r *ReligionRepository) Delete(id string) error {
 	}
 	return nil
 }
-func (r *ReligionRepository) FindByName(name string) (*domain.Religion, error) {
+func (r *ReligionRepository) FindByName(name string) ([]domain.Religion, error) {
 	query := `SELECT id, name, created_at, modified_at FROM achmadnr.religions WHERE name ILIKE $1`
-	row := r.db.QueryRow(query, "%"+name+"%")
-	var religion domain.Religion
-	if err := row.Scan(&religion.ID, &religion.Name, &religion.CreatedAt, &religion.ModifiedAt); err != nil {
-		// if err == sql.ErrNoRows {
-		// 	return nil, nil
-		// }
+	rows, err := r.db.Query(query, "%"+name+"%")
+	if err != nil {
 		return nil, err
 	}
-	return &religion, nil
+	defer rows.Close()
+	var religions []domain.Religion
+	for rows.Next() {
+		var religion domain.Religion
+		if err := rows.Scan(&religion.ID, &religion.Name, &religion.CreatedAt, &religion.ModifiedAt); err != nil {
+			return nil, err
+		}
+		religions = append(religions, religion)
+	}
+	return religions, nil
 }
