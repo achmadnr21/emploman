@@ -75,7 +75,7 @@ func (r *ReligionRepository) Delete(id string) error {
 }
 func (r *ReligionRepository) FindByName(name string) (*domain.Religion, error) {
 	query := `SELECT id, name, created_at, modified_at FROM achmadnr.religions WHERE lower(name) LIKE lower($1)`
-	row := r.db.QueryRow(query, name)
+	row := r.db.QueryRow(query, "%"+name+"%")
 	var religion domain.Religion
 	if err := row.Scan(&religion.ID, &religion.Name, &religion.CreatedAt, &religion.ModifiedAt); err != nil {
 		// if err == sql.ErrNoRows {

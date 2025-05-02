@@ -26,13 +26,11 @@ func (r *GradeRepository) FindAll() ([]domain.Grade, error) {
 	var grades []domain.Grade
 	for rows.Next() {
 		var grade domain.Grade
-		if err := rows.Scan(&grade.ID, &grade.Code, &grade.CreatedAt, &grade.ModifiedAt); err != nil {
+		err := rows.Scan(&grade.ID, &grade.Code, &grade.CreatedAt, &grade.ModifiedAt)
+		if err != nil {
 			return nil, err
 		}
 		grades = append(grades, grade)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 	return grades, nil
 }
@@ -69,12 +67,21 @@ func (r *GradeRepository) Delete(id int) error {
 	}
 	return nil
 }
-func (r *GradeRepository) FindByCode(code string) (*domain.Grade, error) {
-	query := `SELECT id, code, created_at, modified_at FROM achmadnr.grades WHERE code = $1`
-	row := r.db.QueryRow(query, code)
-	var grade domain.Grade
-	if err := row.Scan(&grade.ID, &grade.Code, &grade.CreatedAt, &grade.ModifiedAt); err != nil {
+func (r *GradeRepository) FindByCode(code string) ([]domain.Grade, error) {
+	query := `SELECT id, code, created_at, modified_at FROM achmadnr.grades WHERE code ILIKE $1`
+	rows, err := r.db.Query(query, "%"+code+"%")
+	if err != nil {
 		return nil, err
 	}
-	return &grade, nil
+	defer rows.Close()
+	var grades []domain.Grade
+	for rows.Next() {
+		var grade domain.Grade
+		err := rows.Scan(&grade.ID, &grade.Code, &grade.CreatedAt, &grade.ModifiedAt)
+		if err != nil {
+			return nil, err
+		}
+		grades = append(grades, grade)
+	}
+	return grades, nil
 }
