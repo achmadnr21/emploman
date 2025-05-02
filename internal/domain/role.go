@@ -26,4 +26,5 @@ type RoleInterface interface {
 	Save(role *Role) (*Role, error)
 	Update(role *Role) (*Role, error)
 	Delete(id string) error
+	FindByName(name string) (*Role, error)
 }

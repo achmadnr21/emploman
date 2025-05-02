@@ -4,17 +4,6 @@ import (
 	"time"
 )
 
-/*
-create table achmadnr.units(
-	id SERIAL primary key,
-	name varchar(255) not null,
-	address text not null,
-	description text default 'no desc',
-	created_at timestamp default now(),
-	modified_at timestamp default now()
-);
-*/
-
 type Unit struct {
 	ID          int       `json:"id" db:"id"`
 	Name        string    `json:"name" db:"name"`

@@ -17,4 +17,5 @@ type ReligionInterface interface {
 	Save(religion *Religion) (*Religion, error)
 	Update(religion *Religion) (*Religion, error)
 	Delete(id string) error
+	FindByName(name string) (*Religion, error)
 }
