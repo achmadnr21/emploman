@@ -111,7 +111,7 @@ func (r *RoleRepository) Delete(id string) error {
 func (r *RoleRepository) FindByName(name string) (*domain.Role, error) {
 	query := `SELECT id, name, description, can_add_role, can_add_user, can_add_unit, 
 	can_add_position, can_add_echelon, can_add_religion, can_add_grade, can_assign_employee, 
-	can_assign_employee_global, created_at, modified_at FROM achmadnr.roles WHERE lower(name) LIKE lower($1)`
+	can_assign_employee_global, created_at, modified_at FROM achmadnr.roles WHERE name ILIKE $1`
 	row := r.db.QueryRow(query, "%"+name+"%")
 	var role domain.Role
 	err := row.Scan(
