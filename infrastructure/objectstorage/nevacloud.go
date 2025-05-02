@@ -24,6 +24,7 @@ func createSession(access_key string, secret_key string, endpoint string, region
 	}
 	return sess, nil
 }
+
 func InitS3(access_key string, secret_key string, endpoint string, bucket string, region string) error {
 	sess, err := createSession(access_key, secret_key, endpoint, region)
 	if err != nil {
@@ -31,9 +32,12 @@ func InitS3(access_key string, secret_key string, endpoint string, bucket string
 	}
 	s3Client = s3.New(sess)
 	// Check if the S3 client is working by listing buckets and print it
-	_, err = s3Client.ListBuckets(&s3.ListBucketsInput{})
+	buckets, err := s3Client.ListBuckets(&s3.ListBucketsInput{})
 	if err != nil {
 		return fmt.Errorf("failed to list buckets: %w", err)
+	}
+	for _, bucket := range buckets.Buckets {
+		fmt.Printf("Bucket: %s\n", *bucket.Name)
 	}
 	return nil
 }

@@ -36,8 +36,9 @@ func main() {
 	}
 
 	// Initialize the REST API
+
 	var api gin_api.RESTapi
-	var apiV *gin.RouterGroup = api.Init()
+	var apiV *gin.RouterGroup = api.Init(gin.ReleaseMode)
 	if apiV == nil {
 		fmt.Println("[Error] API initialization failed")
 		panic("API initialization failed")
