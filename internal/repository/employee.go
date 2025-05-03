@@ -70,9 +70,9 @@ func (r *EmployeeRepository) FindByID(id string) (*domain.Employee, error) {
 		&employee.ReligionID, &employee.EchelonID, &employee.CreatedAt,
 		&employee.ModifiedAt)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // Not found
-		}
+		// if err == sql.ErrNoRows {
+		// 	return nil, nil // Not found
+		// }
 		return nil, err
 	}
 	return employee, nil
@@ -147,9 +147,9 @@ func (r *EmployeeRepository) FindByNIP(nip string) (*domain.Employee, error) {
 		&employee.ReligionID, &employee.EchelonID, &employee.CreatedAt,
 		&employee.ModifiedAt)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // Not found
-		}
+		// if err == sql.ErrNoRows {
+		// 	return nil, nil // Not found
+		// }
 		return nil, err
 	}
 	return employee, nil

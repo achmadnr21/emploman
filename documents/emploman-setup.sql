@@ -1,16 +1,29 @@
-
 --SETUP INSERT DATA PADA TABLE
 
 --TABEL ROLE
-insert into achmadnr.roles(id, name, can_add_role, can_add_user, can_add_unit, can_add_position, can_add_echelon, can_add_religion, can_add_grade, can_assign_employee_internal, can_assign_employee_global)
+insert into achmadnr.roles(id, name, level, can_add_role, can_add_employee, can_add_unit, can_add_position, can_add_echelon, can_add_religion, can_add_grade, can_assign_employee_internal, can_assign_employee_global)
 values
-('SUP', 'SUPERADMIN', true, true, true, true, true, true, true, true, true), -- Super user (Developer)
-('ADM', 'ADMIN', true, true, true, true, true, true, true, true, false),  -- Admin dapat menambah semua kecuali assign employee global
-('MGR', 'MANAGER', false, false, true, true, false, false, false, true, false),  -- Manager dapat menambah unit dan posisi serta assign employee internal
-('HRD', 'HUMAN RESOURCES', false, true, false, false, false, false, false, true, true),  -- HRD dapat menambah user, assign employee internal dan global
-('USR', 'USER', false, false, false, false, false, false, false, false, false);  -- User hanya bisa mengakses data tanpa kemampuan menambah apa pun
+('SUP', 'SUPERADMIN', 5, true, true, true, true, true, true, true, true, true), -- Super user (Developer)
+('ADM', 'ADMIN', 4, true, true, true, true, true, true, true, true, false),  -- Admin dapat menambah semua kecuali assign employee global
+('MGR', 'MANAGER', 3, false, false, true, true, false, false, false, true, false),  -- Manager dapat menambah unit dan posisi serta assign employee internal
+('HRD', 'HUMAN RESOURCES', 2, false, true, false, false, false, false, false, true, true),  -- HRD dapat menambah user, assign employee internal dan global
+('USR', 'USER', 1, false, false, false, false, false, false, false, false, false);  -- User hanya bisa mengakses data tanpa kemampuan menambah apa pun
 
 select * from achmadnr.roles;
+
+
+insert into achmadnr.role_promotions(promoter_role_id, from_role_id, to_role_id)
+values
+('SUP', 'USR','HRD'),
+('SUP', 'HRD','MGR'),
+('SUP', 'MGR','ADM'),
+('ADM', 'USR','HRD'),
+('ADM', 'HRD','MGR'),
+('MGR', 'USR','HRD');
+
+
+
+select * from achmadnr.role_promotions;
 
 --TABEL AGAMA
 insert into achmadnr.religions(id, name)
@@ -44,6 +57,7 @@ values
 ('IV/C'),
 ('IV/D');
 select * from achmadnr.grades;
+
 --TABEL ECHELONS
 insert into achmadnr.echelons(code)
 values
@@ -56,6 +70,7 @@ values
 ('VII'),
 ('VIII');
 select * from achmadnr.echelons;
+
 
 -- MASUKKAN USER SUPERADMIN.
 insert into achmadnr.employees(
@@ -122,35 +137,9 @@ select * from achmadnr.employee_assignments;
 insert into achmadnr.employee_assignments(
 	employee_id, unit_id, position_id, is_active
 ) values
-('ea73b8c7-ca92-4acf-b559-5300065b0f19',
+('706e3507-949b-44bf-bbc1-ad37f9ead562',
 	1,
 	2,
 	true
 );
 select * from achmadnr.employee_assignments;
-
--- QUERY TESTS
-
--- tampilkan yang punya record di employee assignment saja
-select te.full_name, tea
-from achmadnr.employees te
-right join achmadnr.employee_assignments tea on te.id = tea.employee_id;
-
--- tampilkan data unit dan posisi dari employee
-select te.full_name, tu.name, tp.name
-from achmadnr.employees te
-right join achmadnr.employee_assignments tea on te.id = tea.employee_id
-left join achmadnr.units tu on tea.unit_id = tu.id
-left join achmadnr.positions tp on tea.position_id = tp.id;
-
--- tampilkan semua data dari employee
-
-select
-te.nip, te.full_name, te.place_of_birth, te.date_of_birth, te.gender,  tg.code, tec.code, tp.name, tu.name, tu.address, tr.name, te.phone_number, te.npwp
-from achmadnr.employees te
-right join achmadnr.employee_assignments tea on te.id = tea.employee_id
-left join achmadnr.units tu on tea.unit_id = tu.id
-left join achmadnr.positions tp on tea.position_id = tp.id
-left join achmadnr.religions tr on te.religion_id = tr.id
-left join achmadnr.echelons tec on te.echelon_id = tec.id
-left join achmadnr.grades tg on te.grade_id = tg.id;

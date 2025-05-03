@@ -30,9 +30,9 @@ func main() {
 	}
 
 	// === File to upload
-	var objectKey string = "gambartest.jpg"
+	var objectKey string = "defaultprofile.jpg"
 	var filePath string = fmt.Sprintf("cmd/s3test/%s", objectKey)
-	var folderPath string = "test-upload"
+	var folderPath string = "pictureprofile"
 	fullObjectKey := fmt.Sprintf("%s/%s", folderPath, objectKey)
 
 	// === Baca file
@@ -60,13 +60,13 @@ func main() {
 	}
 	fmt.Println("[Success] file uploaded to S3:", fullObjectKey)
 
-	// === List objek di bucket
-	listAndPrintObjects(s3client, sc.S3bucket)
+	// // === List objek di bucket
+	// listAndPrintObjects(s3client, sc.S3bucket)
 
-	// === Delete dan tunggu sampai object tidak ada
-	deleteAndWait(s3client, sc.S3bucket, fullObjectKey)
+	// // === Delete dan tunggu sampai object tidak ada
+	// deleteAndWait(s3client, sc.S3bucket, fullObjectKey)
 
-	// === Cek akhir
+	// // === Cek akhir
 	listAndPrintObjects(s3client, sc.S3bucket)
 	headCheck(s3client, sc.S3bucket, fullObjectKey)
 }

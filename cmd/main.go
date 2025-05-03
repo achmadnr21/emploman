@@ -60,10 +60,11 @@ func main() {
 	unitRepo := repository.NewUnitRepository(db)
 	// positionRepo := repository.NewPositionRepository(db)
 	// employeeAssignmentRepo := repository.NewEmployeeAssignmentRepository(db)
+	s3Repo := repository.NewS3Repository(s3client, sc.S3bucket)
 
 	// Usecase initialization
 	authUsecase := usecase.NewAuthUsecase(employeeRepo, roleRepo)
-	empUsecase := usecase.NewEmployeeUsecase(employeeRepo, roleRepo, unitRepo)
+	empUsecase := usecase.NewEmployeeUsecase(employeeRepo, roleRepo, unitRepo, s3Repo)
 	// Handler initialization
 	authHandler := handler.NewAuthHandler(authUsecase)
 	empHandler := handler.NewEmployeeHandler(empUsecase)
@@ -80,16 +81,26 @@ func main() {
 		auth.POST("/refresh", authHandler.RefreshToken)
 	}
 
-	// 2. Employee
+	// 2. Employee Management (Admin)
 	employee := apiV.Group("/employee")
 	employee.Use(middleware.JWTAuthMiddleware)
 	{
+		// CRUD
 		employee.GET("", empHandler.GetAll)
+		employee.POST("", empHandler.Add)
+		employee.PUT("/:nip", empHandler.UpdateEmployee)
+		employee.POST("/uploadpp/:nip", empHandler.UploadPP)
 		employee.GET("/:nip", empHandler.GetByNIP)
 		employee.GET("/unit/:unit_id", empHandler.GetByUnit)
 		employee.GET("/search", empHandler.Search)
-		employee.POST("/add", empHandler.Add)
-		// employee.PUT("/update", empHandler.UpdateEmployee)
+	}
+
+	me := apiV.Group("/me")
+	me.Use(middleware.JWTAuthMiddleware)
+	{
+		me.GET("", empHandler.GetMe)
+		me.PUT("", empHandler.UpdateMe)
+		me.POST("/uploadpp", empHandler.UploadPPMe)
 	}
 
 	// ========================== Start HTTP API =========================

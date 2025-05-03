@@ -34,7 +34,9 @@ func (r *S3Repository) UploadFile(key string, fileBytes []byte, contentType stri
 		return "", fmt.Errorf("failed to upload file to S3: %w", err)
 	}
 
-	return key, nil
+	url := fmt.Sprintf("https://s3.nevaobjects.id/%s/%s", r.bucket, key)
+
+	return url, nil
 }
 func (r *S3Repository) GetFileURL(key string) (string, error) {
 	// Generate a pre-signed URL for the file

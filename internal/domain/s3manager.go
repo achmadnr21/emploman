@@ -1,6 +1,6 @@
 package domain
 
-type S3Repository interface {
+type S3Interface interface {
 	UploadFile(key string, fileBytes []byte, contentType string) (string, error)
 	GetFileURL(key string) (string, error)
 	DeleteFile(key string) error

@@ -1,48 +1,29 @@
-SET TIME ZONE 'Asia/Jakarta';
-
-drop schema achmadnr;
-create schema achmadnr;
-create schema auth;
-
-
-drop table achmadnr.employee_assignments;
-
-drop table achmadnr.employees;
-drop table achmadnr.role_promotions;
-drop table achmadnr.roles;
-drop table achmadnr.religions;
-drop table achmadnr.grades;
-drop table achmadnr.echelons;
-drop table achmadnr.units;
-drop table achmadnr.positions;
-
-
---DDL 
-
-create table achmadnr.roles(
-	id char(3) unique primary key,
-	name varchar(255) not null,
-	level int not null,
-	description text default 'no desc',
-	can_add_role boolean default false,
-	can_add_employee boolean default false,
-	can_add_unit boolean default false,
-	can_add_position boolean default false,
-	can_add_echelon boolean default false,
-	can_add_religion boolean default false,
-	can_add_grade boolean default false,
-	can_assign_employee_internal boolean default false,
-	can_assign_employee_global boolean default false,
-	created_at timestamp default now(),
-	modified_at timestamp default now()
+-- RBAC model
+-- This is a model for RBAC (Role-Based Access Control) system (We Are Not Implementing this but nice to know)
+CREATE TABLE achmadnr.roles (
+	id CHAR(3) PRIMARY KEY,
+	name VARCHAR(255) NOT NULL,
+	description TEXT DEFAULT 'no desc',
+	created_at TIMESTAMP DEFAULT now(),
+	modified_at TIMESTAMP DEFAULT now()
+);
+CREATE TABLE achmadnr.permissions (
+	id SERIAL PRIMARY KEY,
+	code VARCHAR(100) UNIQUE NOT NULL,  
+	description TEXT
+);
+CREATE TABLE achmadnr.role_permissions (
+	role_id CHAR(3) NOT NULL,
+	permission_id INT NOT NULL,
+	PRIMARY KEY (role_id, permission_id),
+	FOREIGN KEY (role_id) REFERENCES achmadnr.roles(id) ON DELETE CASCADE,
+	FOREIGN KEY (permission_id) REFERENCES achmadnr.permissions(id) ON DELETE CASCADE
 );
 
 CREATE TABLE achmadnr.role_promotions (
-	promoter_role_id CHAR(3) not null,
 	from_role_id CHAR(3) NOT NULL,
 	to_role_id CHAR(3) NOT NULL,
-	PRIMARY KEY (promoter_role_id, from_role_id, to_role_id),
-	foreign key (promoter_role_id) references achmadnr.roles(id) on delete cascade,
+	PRIMARY KEY (from_role_id, to_role_id),
 	FOREIGN KEY (from_role_id) REFERENCES achmadnr.roles(id) ON DELETE CASCADE,
 	FOREIGN KEY (to_role_id) REFERENCES achmadnr.roles(id) ON DELETE CASCADE
 );
@@ -83,7 +64,7 @@ create table achmadnr.employees(
 	date_of_birth DATE not null,
 	gender char(1) check (gender in('L','P')),
 	phone_number varchar(20) not null,
-	photo_url text default 'noimg',
+	photo_url text default '/image/profile_picture_default.png',
 	address text not null,
 	npwp varchar(25) null,
 	grade_id int not null,
