@@ -121,10 +121,6 @@ func (h *EmployeeHandler) Add(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.ResponseSuccess("Add employee", employee))
 }
 
-// upload profile picture
-// alurnya adalah akan menerima file jpeg/png dari client
-// dan akan disimpan di s3 bucket
-
 func (h *EmployeeHandler) UploadPP(c *gin.Context) {
 	user_id, _ := c.Get("user_id")
 	nip := c.Param("nip")
@@ -162,49 +158,6 @@ func (h *EmployeeHandler) UpdateEmployee(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.ResponseSuccess("Update employee", employee))
 }
 
-func (h *EmployeeHandler) GetMe(c *gin.Context) {
-	user_id, _ := c.Get("user_id")
-	employee, err := h.uc.GetMe(user_id.(string))
-	if err != nil {
-		c.JSON(utils.GetHTTPErrorCode(err), utils.ResponseError(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, utils.ResponseSuccess("Get employee by NIP", employee))
-}
-func (h *EmployeeHandler) UpdateMe(c *gin.Context) {
-	user_id, _ := c.Get("user_id")
-	var payload domain.Employee
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, utils.ResponseError("Invalid input"))
-		return
-	}
-	employee, err := h.uc.UpdateMe(user_id.(string), &payload)
-	if err != nil {
-		c.JSON(utils.GetHTTPErrorCode(err), utils.ResponseError(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, utils.ResponseSuccess("Update employee", employee))
-}
-
-func (h *EmployeeHandler) UploadPPMe(c *gin.Context) {
-	user_id, _ := c.Get("user_id")
-	file, err := c.FormFile("image")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, utils.ResponseError("Invalid file"))
-		return
-	}
-	url, err := h.uc.UploadPPMe(user_id.(string), file)
-	if err != nil {
-		c.JSON(utils.GetHTTPErrorCode(err), utils.ResponseError(err.Error()))
-		return
-	}
-	var payload struct {
-		URL string `json:"url"`
-	}
-	payload.URL = url
-	c.JSON(http.StatusOK, utils.ResponseSuccess("Upload profile picture", payload))
-}
-
 func (h *EmployeeHandler) Promote(c *gin.Context) {
 	user_id, _ := c.Get("user_id")
 	nip := c.Param("nip")
@@ -219,20 +172,4 @@ func (h *EmployeeHandler) Promote(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, utils.ResponseSuccess("Promote employee", employee))
-}
-
-func (h *EmployeeHandler) Demote(c *gin.Context) {
-	user_id, _ := c.Get("user_id")
-	nip := c.Param("nip")
-	var payload domain.Employee
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, utils.ResponseError("Invalid input"))
-		return
-	}
-	employee, err := h.uc.Demote(user_id.(string), nip, payload.RoleID)
-	if err != nil {
-		c.JSON(utils.GetHTTPErrorCode(err), utils.ResponseError(err.Error()))
-		return
-	}
-	c.JSON(http.StatusOK, utils.ResponseSuccess("Demote employee", employee))
 }

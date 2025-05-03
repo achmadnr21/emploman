@@ -17,20 +17,6 @@ func NewEmployeeRepository(db *sql.DB) *EmployeeRepository {
 	}
 }
 
-/*
-	type EmployeeInterface interface {
-		FindAll() ([]Employee, error)
-		FindByID(id string) (*Employee, error)
-		Save(employee *Employee) (*Employee, error)
-		Update(employee *Employee) (*Employee, error)
-		UploadProfileImage(id string, fileName string) (string, error)
-		Delete(id string) error
-		FindByNIP(nip string) (*Employee, error)
-		FindByName(name string) ([]Employee, error)
-		FindByUnit(unitID string) ([]Employee, error)
-		Search(input string) ([]Employee, error)
-	}
-*/
 func (r *EmployeeRepository) FindAll() ([]domain.Employee, error) {
 	query := `SELECT id, role_id, nip, password, full_name, place_of_birth, date_of_birth,
 	gender, phone_number, photo_url, address, npwp, grade_id, religion_id,

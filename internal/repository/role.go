@@ -161,16 +161,26 @@ func (r *RoleRepository) FindByName(name string) (*domain.Role, error) {
 	return &role, nil
 }
 
-func (r *RoleRepository) FindPromoteRole(promoterRoleID, fromRoleID, toRoleID string) (*domain.RolePromotion, error) {
-	query := `SELECT promoter_role_id, from_role_id, to_role_id FROM achmadnr.role_promotions WHERE promoter_role_id = $1 AND from_role_id = $2 AND to_role_id = $3`
-	row := r.db.QueryRow(query, promoterRoleID, fromRoleID, toRoleID)
-	var rolePromotion domain.RolePromotion
-	err := row.Scan(&rolePromotion.PromoterRoleID, &rolePromotion.FromRoleID, &rolePromotion.ToRoleID)
+func (r *RoleRepository) FindPromoteRole(promoterRoleID string) ([]domain.RolePromotion, error) {
+	query := `SELECT promoter_role_id, from_role_id, to_role_id
+FROM achmadnr.role_promotions
+WHERE promoter_role_id = $1`
+	rows, err := r.db.Query(query, promoterRoleID)
 	if err != nil {
-		// if err == sql.ErrNoRows {
-		// 	return nil, nil
-		// }
 		return nil, err
 	}
-	return &rolePromotion, nil
+	defer rows.Close()
+	var rolePromotions []domain.RolePromotion
+	for rows.Next() {
+		var rolePromotion domain.RolePromotion
+		if err := rows.Scan(&rolePromotion.PromoterRoleID, &rolePromotion.FromRoleID, &rolePromotion.ToRoleID); err != nil {
+			return nil, err
+		}
+		rolePromotions = append(rolePromotions, rolePromotion)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return rolePromotions, nil
+
 }

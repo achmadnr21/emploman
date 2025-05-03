@@ -48,5 +48,5 @@ type RoleInterface interface {
 	Update(role *Role) (*Role, error)
 	Delete(id string) error
 	FindByName(name string) (*Role, error)
-	FindPromoteRole(promoterRoleID, fromRoleID, toRoleID string) (*RolePromotion, error)
+	FindPromoteRole(promoterRoleID string) ([]RolePromotion, error)
 }

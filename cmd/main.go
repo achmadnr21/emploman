@@ -65,9 +65,11 @@ func main() {
 	// Usecase initialization
 	authUsecase := usecase.NewAuthUsecase(employeeRepo, roleRepo)
 	empUsecase := usecase.NewEmployeeUsecase(employeeRepo, roleRepo, unitRepo, s3Repo)
+	meUsecase := usecase.NewMeUsecase(employeeRepo, roleRepo, unitRepo, s3Repo)
 	// Handler initialization
 	authHandler := handler.NewAuthHandler(authUsecase)
 	empHandler := handler.NewEmployeeHandler(empUsecase)
+	meHandler := handler.NewMeHandler(meUsecase)
 
 	// ========================= API Routing =========================
 
@@ -93,16 +95,15 @@ func main() {
 		employee.GET("/:nip", empHandler.GetByNIP)
 		employee.GET("/unit/:unit_id", empHandler.GetByUnit)
 		employee.GET("/search", empHandler.Search)
-		employee.PUT("/uprole/:nip", empHandler.Promote)
-		employee.PUT("/downrole/:nip", empHandler.Demote)
+		employee.PUT("/promote/:nip", empHandler.Promote)
 	}
 
 	me := apiV.Group("/me")
 	me.Use(middleware.JWTAuthMiddleware)
 	{
-		me.GET("", empHandler.GetMe)
-		me.PUT("", empHandler.UpdateMe)
-		me.POST("/uploadpp", empHandler.UploadPPMe)
+		me.GET("", meHandler.GetMe)
+		me.PUT("", meHandler.UpdateMe)
+		me.POST("/uploadpp", meHandler.UploadPPMe)
 	}
 
 	// ========================== Start HTTP API =========================
