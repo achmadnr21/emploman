@@ -93,6 +93,8 @@ func main() {
 		employee.GET("/:nip", empHandler.GetByNIP)
 		employee.GET("/unit/:unit_id", empHandler.GetByUnit)
 		employee.GET("/search", empHandler.Search)
+		employee.PUT("/uprole/:nip", empHandler.Promote)
+		employee.PUT("/downrole/:nip", empHandler.Demote)
 	}
 
 	me := apiV.Group("/me")

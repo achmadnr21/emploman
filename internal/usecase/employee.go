@@ -327,6 +327,70 @@ func (eu *EmployeeUsecase) UpdateEmployee(proposerId string, nip string, employe
 	return newEmp, nil
 }
 
+func (eu *EmployeeUsecase) Promote(proposerId string, nip string, roleID string) (*domain.Employee, error) {
+	// get proposer
+	proposer, err := eu.empRepo.FindByID(proposerId)
+	proposerRole := proposer.RoleID
+	if err != nil {
+		return nil, &utils.NotFoundError{Message: "user not found"}
+	}
+	// get employee
+	employee, err := eu.empRepo.FindByNIP(nip)
+	employeeRole := employee.RoleID
+	if err != nil {
+		return nil, &utils.NotFoundError{Message: "employee not found"}
+	}
+	// check if user is authorized to promote employee
+	// param: proposer Role, current employee Role, new role
+	// return : RolePromotion and error
+	// nil, err if not found.
+	pr, err := eu.roleRepo.FindPromoteRole(proposerRole, employeeRole, roleID)
+	if err != nil {
+		return nil, &utils.NotFoundError{Message: "user role not found"}
+	}
+	// update employee role
+	employee.RoleID = pr.ToRoleID
+	// save employee
+	newEmployee, err := eu.empRepo.Update(employee)
+	if err != nil {
+		return nil, &utils.InternalServerError{Message: "failed to update employee"}
+	}
+	newEmployee.Password = "" // clear password for security
+	return newEmployee, nil
+}
+
+func (eu *EmployeeUsecase) Demote(proposerId string, nip string, roleID string) (*domain.Employee, error) {
+	// get proposer
+	proposer, err := eu.empRepo.FindByID(proposerId)
+	proposerRole := proposer.RoleID
+	if err != nil {
+		return nil, &utils.NotFoundError{Message: "user not found"}
+	}
+	// get employee
+	employee, err := eu.empRepo.FindByNIP(nip)
+	employeeRole := employee.RoleID
+	if err != nil {
+		return nil, &utils.NotFoundError{Message: "employee not found"}
+	}
+	// check if user is authorized to promote employee
+	// param: proposer Role, current employee Role, new role
+	// return : RolePromotion and error
+	// nil, err if not found.
+	pr, err := eu.roleRepo.FindPromoteRole(proposerRole, roleID, employeeRole)
+	if err != nil {
+		return nil, &utils.NotFoundError{Message: "user role not found"}
+	}
+	// update employee role
+	employee.RoleID = pr.FromRoleID
+	// save employee
+	newEmployee, err := eu.empRepo.Update(employee)
+	if err != nil {
+		return nil, &utils.InternalServerError{Message: "failed to update employee"}
+	}
+	newEmployee.Password = "" // clear password for security
+	return newEmployee, nil
+}
+
 func validateEmployeeInput(e *domain.Employee) error {
 
 	if e.RoleID == "" || len(e.RoleID) != 3 {

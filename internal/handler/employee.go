@@ -47,6 +47,8 @@ employee.Use(middleware.JWTAuthMiddleware)
 		employee.GET("/:nip", empHandler.GetByNIP)
 		employee.GET("/unit/:unit_id", empHandler.GetByUnit)
 		employee.GET("/search", empHandler.Search)
+		employee.PUT("/uprole/:nip", empHandler.Promote)
+		employee.PUT("/downrole/:nip", empHandler.Demote)
 
 	}
 */
@@ -201,4 +203,36 @@ func (h *EmployeeHandler) UploadPPMe(c *gin.Context) {
 	}
 	payload.URL = url
 	c.JSON(http.StatusOK, utils.ResponseSuccess("Upload profile picture", payload))
+}
+
+func (h *EmployeeHandler) Promote(c *gin.Context) {
+	user_id, _ := c.Get("user_id")
+	nip := c.Param("nip")
+	var payload domain.Employee
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, utils.ResponseError("Invalid input"))
+		return
+	}
+	employee, err := h.uc.Promote(user_id.(string), nip, payload.RoleID)
+	if err != nil {
+		c.JSON(utils.GetHTTPErrorCode(err), utils.ResponseError(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, utils.ResponseSuccess("Promote employee", employee))
+}
+
+func (h *EmployeeHandler) Demote(c *gin.Context) {
+	user_id, _ := c.Get("user_id")
+	nip := c.Param("nip")
+	var payload domain.Employee
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, utils.ResponseError("Invalid input"))
+		return
+	}
+	employee, err := h.uc.Demote(user_id.(string), nip, payload.RoleID)
+	if err != nil {
+		c.JSON(utils.GetHTTPErrorCode(err), utils.ResponseError(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, utils.ResponseSuccess("Demote employee", employee))
 }
