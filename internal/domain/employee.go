@@ -33,4 +33,6 @@ type EmployeeInterface interface {
 	Delete(id string) error
 	FindByNIP(nip string) (*Employee, error)
 	FindByName(name string) ([]Employee, error)
+	FindByUnit(unitID int) ([]Employee, error)
+	Search(input string) ([]Employee, error)
 }

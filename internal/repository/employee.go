@@ -18,67 +18,19 @@ func NewEmployeeRepository(db *sql.DB) *EmployeeRepository {
 }
 
 /*
---
---employees ddl
-
-create table achmadnr.employees(
-	id uuid unique default gen_random_uuid() primary key,
-	role_id char(3) not null,
-	nip varchar(20) unique not null,
-	password varchar(255) not null,
-	full_name varchar(255) not null,
-	place_of_birth varchar(100) not null,
-	date_of_birth DATE not null,
-	gender char(1) check (gender in('L','P')),
-	phone_number varchar(20) not null,
-	photo_url text default '/image/profile_picture_default.png',
-	address text not null,
-	npwp varchar(25) null,
-	grade_id int not null,
-	religion_id char(3) not null,
-	echelon_id int not null,
-	created_at timestamp default now(),
-	modified_at timestamp default now(),
-	foreign key (grade_id) references achmadnr.grades(id) on delete set null,
-	foreign key (religion_id) references achmadnr.religions(id) on delete set null,
-	foreign key (echelon_id) references achmadnr.echelons(id) on delete set null,
-	foreign key (role_id) references achmadnr.roles(id) on delete set null
-);
-
-
-type Employee struct {
-	ID           string    `json:"id" db:"id"`
-	RoleID       string    `json:"role_id" db:"role_id"`
-	NIP          string    `json:"nip" db:"nip"`
-	Password     string    `json:"password" db:"password"`
-	FullName     string    `json:"full_name" db:"full_name"`
-	PlaceOfBirth string    `json:"place_of_birth" db:"place_of_birth"`
-	DateOfBirth  time.Time `json:"date_of_birth" db:"date_of_birth"`
-	Gender       string    `json:"gender" db:"gender"`
-	PhoneNumber  string    `json:"phone_number" db:"phone_number"`
-	PhotoURL     string    `json:"photo_url" db:"photo_url"`
-	Address      string    `json:"address" db:"address"`
-	NPWP         *string   `json:"npwp" db:"npwp"`
-	GradeID      int       `json:"grade_id" db:"grade_id"`
-	ReligionID   string    `json:"religion_id" db:"religion_id"`
-	EchelonID    int       `json:"echelon_id" db:"echelon_id"`
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	ModifiedAt   time.Time `json:"modified_at" db:"modified_at"`
-}
-
-type EmployeeInterface interface {
-	FindAll() ([]Employee, error)
-	FindByID(id string) (*Employee, error)
-	Save(employee *Employee) (*Employee, error)
-	Update(employee *Employee) (*Employee, error)
-	UploadProfileImage(id string, fileName string) (string, error)
-	Delete(id string) error
-	FindByNIP(nip string) (*Employee, error)
-	FindByName(name string) ([]Employee, error)
-}
-
+	type EmployeeInterface interface {
+		FindAll() ([]Employee, error)
+		FindByID(id string) (*Employee, error)
+		Save(employee *Employee) (*Employee, error)
+		Update(employee *Employee) (*Employee, error)
+		UploadProfileImage(id string, fileName string) (string, error)
+		Delete(id string) error
+		FindByNIP(nip string) (*Employee, error)
+		FindByName(name string) ([]Employee, error)
+		FindByUnit(unitID string) ([]Employee, error)
+		Search(input string) ([]Employee, error)
+	}
 */
-
 func (r *EmployeeRepository) FindAll() ([]domain.Employee, error) {
 	query := `SELECT id, role_id, nip, password, full_name, place_of_birth, date_of_birth,
 	gender, phone_number, photo_url, address, npwp, grade_id, religion_id,
@@ -208,6 +160,62 @@ func (r *EmployeeRepository) FindByName(name string) ([]domain.Employee, error) 
 	phone_number, photo_url, address, npwp, grade_id, religion_id,
 	echelon_id, created_at, modified_at FROM achmadnr.employees WHERE full_name ILIKE '%' || $1 || '%'`
 	rows, err := r.db.Query(query, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var employees []domain.Employee
+	for rows.Next() {
+		var employee domain.Employee
+		err := rows.Scan(&employee.ID, &employee.RoleID, &employee.NIP, &employee.Password,
+			&employee.FullName, &employee.PlaceOfBirth, &employee.DateOfBirth,
+			&employee.Gender, &employee.PhoneNumber, &employee.PhotoURL,
+			&employee.Address, &employee.NPWP, &employee.GradeID,
+			&employee.ReligionID, &employee.EchelonID, &employee.CreatedAt,
+			&employee.ModifiedAt)
+		if err != nil {
+			return nil, err
+		}
+		employee.Password = "" // Clear password for security
+		employees = append(employees, employee)
+	}
+	return employees, nil
+}
+
+func (r *EmployeeRepository) FindByUnit(unitID int) ([]domain.Employee, error) {
+	query := `SELECT e.id, e.role_id, e.nip, e.password, e.full_name, e.place_of_birth, e.date_of_birth, e.gender,
+	e.phone_number, e.photo_url, e.address, e.npwp, e.grade_id, e.religion_id,
+	e.echelon_id, e.created_at, e.modified_at
+	FROM achmadnr.employees e 
+	right join achmadnr.employee_assignments ea on e.id = ea.employee_id
+	where ea.unit_id = $1`
+	rows, err := r.db.Query(query, unitID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var employees []domain.Employee
+	for rows.Next() {
+		var employee domain.Employee
+		err := rows.Scan(&employee.ID, &employee.RoleID, &employee.NIP, &employee.Password,
+			&employee.FullName, &employee.PlaceOfBirth, &employee.DateOfBirth,
+			&employee.Gender, &employee.PhoneNumber, &employee.PhotoURL,
+			&employee.Address, &employee.NPWP, &employee.GradeID,
+			&employee.ReligionID, &employee.EchelonID, &employee.CreatedAt,
+			&employee.ModifiedAt)
+		if err != nil {
+			return nil, err
+		}
+		employee.Password = "" // Clear password for security
+		employees = append(employees, employee)
+	}
+	return employees, nil
+}
+func (r *EmployeeRepository) Search(input string) ([]domain.Employee, error) {
+	query := `SELECT id, role_id, nip, password, full_name, place_of_birth, date_of_birth, gender,
+	phone_number, photo_url, address, npwp, grade_id, religion_id,
+	echelon_id, created_at, modified_at FROM achmadnr.employees WHERE nip = $1 OR full_name ILIKE '%' || $1 || '%'`
+	rows, err := r.db.Query(query, input)
 	if err != nil {
 		return nil, err
 	}

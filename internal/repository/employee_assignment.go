@@ -17,44 +17,6 @@ func NewEmployeeAssignmentRepository(db *sql.DB) *EmployeeAssignmentRepository {
 	}
 }
 
-/*
-
-create table achmadnr.employee_assignments(
-	employee_id uuid not null,
-	unit_id int not null,
-	position_id int not null,
-	is_active boolean not null,
-	assigned_at timestamp default now(),
-	created_at timestamp default now(),
-	modified_at timestamp default now(),
-	primary key(employee_id, position_id, unit_id),
-	foreign key(employee_id) references achmadnr.employees(id),
-	foreign key(unit_id) references achmadnr.units(id),
-	foreign key(position_id) references achmadnr.positions(id)
-);
-
-type EmployeeAssignment struct {
-	EmployeeID string    `json:"employee_id" db:"employee_id"`
-	UnitID     int       `json:"unit_id" db:"unit_id"`
-	PositionID int       `json:"position_id" db:"position_id"`
-	IsActive   bool      `json:"is_active" db:"is_active"`
-	AssignedAt time.Time `json:"assigned_at" db:"assigned_at"`
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
-	ModifiedAt time.Time `json:"modified_at" db:"modified_at"`
-}
-
-type EmployeeAssignmentInterface interface {
-	FindAll() ([]EmployeeAssignment, error)
-	FindByID(employeeID string, unitID int, positionID int) (*EmployeeAssignment, error)
-	Save(employeeAssignment *EmployeeAssignment) (*EmployeeAssignment, error)
-	Update(employeeAssignment *EmployeeAssignment) (*EmployeeAssignment, error)
-	Delete(employeeID string, unitID int, positionID int) error
-	FindByEmployeeID(employeeID string) (*EmployeeAssignment, error)
-	FindByUnitID(unitID int) ([]EmployeeAssignment, error)
-}
-
-*/
-
 func (r *EmployeeAssignmentRepository) FindAll() ([]domain.EmployeeAssignment, error) {
 	query := `SELECT employee_id, unit_id, position_id, is_active, assigned_at, created_at, modified_at FROM achmadnr.employee_assignments`
 	rows, err := r.db.Query(query)

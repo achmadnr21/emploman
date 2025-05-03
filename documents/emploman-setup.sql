@@ -59,7 +59,7 @@ select * from achmadnr.echelons;
 
 -- MASUKKAN USER SUPERADMIN.
 insert into achmadnr.employees(
-    role_id, nip, password, full_name, place_of_birth, date_of_birth, gender, phone_number, photo_url, address, npwp, grade_id, religion_id, echelon_id
+    role_id, nip, password, full_name, place_of_birth, date_of_birth, gender, phone_number, address, npwp, grade_id, religion_id, echelon_id
 )
 values
 (
@@ -71,7 +71,6 @@ values
     '2001-01-01',  -- Ganti dengan tanggal lahir
     'L',  -- L atau P
     '081234567890',  -- Ganti dengan nomor telepon
-    NULL,  -- Ganti dengan URL foto (atau NULL jika tidak ada)
     'Jl. Contoh No. 10, Jakarta',  -- Ganti dengan alamat lengkap
     NULL,  -- Ganti dengan NPWP jika ada, atau NULL
     16,  -- Ganti dengan ID grade sesuai
@@ -87,7 +86,6 @@ values
     '2001-01-01',  -- Ganti dengan tanggal lahir
     'L',  -- L atau P
     '081234567890',  -- Ganti dengan nomor telepon
-    NULL,  -- Ganti dengan URL foto (atau NULL jika tidak ada)
     'Jl. Contoh No. 10, Jakarta',  -- Ganti dengan alamat lengkap
     NULL,  -- Ganti dengan NPWP jika ada, atau NULL
     16,  -- Ganti dengan ID grade sesuai

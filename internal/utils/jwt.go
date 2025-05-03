@@ -47,7 +47,7 @@ func GenerateAccessToken(user_id string) (string, error) {
 		UserId: user_id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * time.Duration(JWT_EXP_MIN))),
-			Issuer:    "aethergrow",
+			Issuer:    "emploman",
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -64,7 +64,7 @@ func GenerateRefreshToken(user_id string) (string, error) {
 		UserId: user_id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * time.Duration(REF_EXP_MIN))),
-			Issuer:    "aethergrow",
+			Issuer:    "emploman",
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

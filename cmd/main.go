@@ -10,6 +10,10 @@ import (
 	"github.com/achmadnr21/emploman/config"
 	"github.com/achmadnr21/emploman/infrastructure/objectstorage"
 	pgsql "github.com/achmadnr21/emploman/infrastructure/rdbms"
+	"github.com/achmadnr21/emploman/internal/handler"
+	"github.com/achmadnr21/emploman/internal/middleware"
+	"github.com/achmadnr21/emploman/internal/repository"
+	"github.com/achmadnr21/emploman/internal/usecase"
 	"github.com/achmadnr21/emploman/internal/utils"
 	gin_api "github.com/achmadnr21/emploman/service"
 )
@@ -42,20 +46,65 @@ func main() {
 	if apiV == nil {
 		fmt.Println("[Error] API initialization failed")
 		panic("API initialization failed")
+	} else {
+		fmt.Println("[Info] API initialized successfully")
 	}
 
-	// Create Simple open Ping endpoint
-	apiV.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	},
-	)
+	// ========================= Dependency Injection =========================
+	// Repository initialization
+	roleRepo := repository.NewRoleRepository(db)
+	// religionRepo := repository.NewReligionRepository(db)
+	// gradeRepo := repository.NewGradeRepository(db)
+	// echelonRepo := repository.NewEchelonRepository(db)
+	employeeRepo := repository.NewEmployeeRepository(db)
+	unitRepo := repository.NewUnitRepository(db)
+	// positionRepo := repository.NewPositionRepository(db)
+	// employeeAssignmentRepo := repository.NewEmployeeAssignmentRepository(db)
 
+	// Usecase initialization
+	authUsecase := usecase.NewAuthUsecase(employeeRepo, roleRepo)
+	empUsecase := usecase.NewEmployeeUsecase(employeeRepo, roleRepo, unitRepo)
+	// Handler initialization
+	authHandler := handler.NewAuthHandler(authUsecase)
+	empHandler := handler.NewEmployeeHandler(empUsecase)
+
+	// ========================= API Routing =========================
+
+	// 0. Create Simple open Ping endpoint
+	apiV.GET("/ping", HandlePing)
+
+	// 1. Auth
+	auth := apiV.Group("/auth")
+	{
+		auth.POST("/login", authHandler.Login)
+		auth.POST("/refresh", authHandler.RefreshToken)
+	}
+
+	// 2. Employee
+	employee := apiV.Group("/employee")
+	employee.Use(middleware.JWTAuthMiddleware)
+	{
+		employee.GET("", empHandler.GetAll)
+		employee.GET("/:nip", empHandler.GetByNIP)
+		employee.GET("/unit/:unit_id", empHandler.GetByUnit)
+		employee.GET("/search", empHandler.Search)
+		employee.POST("/add", empHandler.Add)
+		// employee.PUT("/update", empHandler.UpdateEmployee)
+	}
+
+	// ========================== Start HTTP API =========================
 	service_config := fmt.Sprintf(":%d", sc.ServicePort)
 	fmt.Printf("\nService running on port %s \n", service_config)
 	api.Router.Run(service_config)
 
+}
+
+func HandlePing(c *gin.Context) {
+	c.JSON(200, utils.ResponseSuccess("Pong", &struct {
+		Developer string `json:"developer"`
+	}{
+		Developer: "Achmad Nashruddin Riskynanda",
+	}))
 }
 
 func service_init() (config.Config, error) {
