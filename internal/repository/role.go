@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/achmadnr21/emploman/internal/domain"
 )
@@ -102,9 +103,16 @@ func (r *RoleRepository) Update(role *domain.Role) (*domain.Role, error) {
 
 func (r *RoleRepository) Delete(id string) error {
 	query := `DELETE FROM roles WHERE id = $1`
-	_, err := r.db.Exec(query, id)
+	res, err := r.db.Exec(query, id)
 	if err != nil {
 		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows deleted")
 	}
 	return nil
 }

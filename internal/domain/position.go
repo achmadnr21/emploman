@@ -4,16 +4,6 @@ import (
 	"time"
 )
 
-/*
-create table achmadnr.positions(
-	id SERIAL primary key,
-	name varchar(255) not null,
-	created_at timestamp default now(),
-	modified_at timestamp default now()
-);
-
-*/
-
 type Position struct {
 	ID         int       `json:"id" db:"id"`
 	Name       string    `json:"name" db:"name"`
@@ -26,5 +16,5 @@ type PositionInterface interface {
 	Save(position *Position) (*Position, error)
 	Update(position *Position) (*Position, error)
 	Delete(id int) error
-	FindByName(name string) (*Position, error)
+	FindByName(name string) ([]Position, error)
 }

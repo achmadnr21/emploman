@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/achmadnr21/emploman/internal/domain"
 )
@@ -88,9 +89,16 @@ func (r *EcholonRepository) Update(echelon *domain.Echelon) (*domain.Echelon, er
 }
 func (r *EcholonRepository) Delete(id int) error {
 	query := `DELETE FROM achmadnr.echelons WHERE id = $1`
-	_, err := r.db.Exec(query, id)
+	res, err := r.db.Exec(query, id)
 	if err != nil {
 		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows deleted")
 	}
 	return nil
 }

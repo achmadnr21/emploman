@@ -32,5 +32,5 @@ type EmployeeInterface interface {
 	UploadProfileImage(id string, fileName string) (string, error)
 	Delete(id string) error
 	FindByNIP(nip string) (*Employee, error)
-	FindByEmail(email string) (*Employee, error)
+	FindByName(name string) ([]Employee, error)
 }

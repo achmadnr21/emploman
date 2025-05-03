@@ -19,5 +19,5 @@ type UnitInterface interface {
 	Save(unit *Unit) (*Unit, error)
 	Update(unit *Unit) (*Unit, error)
 	Delete(id int) error
-	FindByName(name string) (*Unit, error)
+	FindByName(name string) ([]Unit, error)
 }
