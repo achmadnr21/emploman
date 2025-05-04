@@ -1,17 +1,3 @@
-/*
-// 2. Employee
-	employee := apiV.Group("/employee")
-	employee.Use(middleware.JWTAuthMiddleware)
-	{
-		employee.GET("", empHandler.GetAll)
-		employee.GET("/:nip", empHandler.GetByNIP)
-		employee.GET("/:unit_id", empHandler.GetByUnit)
-		employee.GET("/search", empHandler.Search)
-		employee.POST("/add", empHandler.Add)
-		employee.PUT("/update", empHandler.UpdateEmployee)
-	}
-*/
-
 package handler
 
 import (
@@ -20,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/achmadnr21/emploman/internal/domain"
-	"github.com/achmadnr21/emploman/internal/usecase"
+	usecase "github.com/achmadnr21/emploman/internal/usecase/employee"
 	"github.com/achmadnr21/emploman/internal/utils"
 	"github.com/gin-gonic/gin"
 )

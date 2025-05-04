@@ -10,12 +10,17 @@ import (
 	"github.com/achmadnr21/emploman/config"
 	"github.com/achmadnr21/emploman/infrastructure/objectstorage"
 	pgsql "github.com/achmadnr21/emploman/infrastructure/rdbms"
-	"github.com/achmadnr21/emploman/internal/handler"
-	"github.com/achmadnr21/emploman/internal/middleware"
-	"github.com/achmadnr21/emploman/internal/repository"
-	"github.com/achmadnr21/emploman/internal/usecase"
 	"github.com/achmadnr21/emploman/internal/utils"
 	gin_api "github.com/achmadnr21/emploman/service"
+
+	"github.com/achmadnr21/emploman/internal/middleware"
+
+	"github.com/achmadnr21/emploman/internal/repository"
+
+	"github.com/achmadnr21/emploman/internal/usecase"
+	emp "github.com/achmadnr21/emploman/internal/usecase/employee"
+
+	"github.com/achmadnr21/emploman/internal/handler"
 )
 
 func main() {
@@ -61,15 +66,19 @@ func main() {
 	// positionRepo := repository.NewPositionRepository(db)
 	// employeeAssignmentRepo := repository.NewEmployeeAssignmentRepository(db)
 	s3Repo := repository.NewS3Repository(s3client, sc.S3bucket)
+	printRepo := repository.NewPrintRepository(db)
 
 	// Usecase initialization
 	authUsecase := usecase.NewAuthUsecase(employeeRepo, roleRepo)
-	empUsecase := usecase.NewEmployeeUsecase(employeeRepo, roleRepo, unitRepo, s3Repo)
+	empUsecase := emp.NewEmployeeUsecase(employeeRepo, roleRepo, unitRepo, s3Repo)
 	meUsecase := usecase.NewMeUsecase(employeeRepo, roleRepo, unitRepo, s3Repo)
+	printUsecase := usecase.NewPrintUsecase(printRepo, employeeRepo, roleRepo, unitRepo)
+
 	// Handler initialization
 	authHandler := handler.NewAuthHandler(authUsecase)
 	empHandler := handler.NewEmployeeHandler(empUsecase)
 	meHandler := handler.NewMeHandler(meUsecase)
+	printHandler := handler.NewPrintHandler(printUsecase)
 
 	// ========================= API Routing =========================
 
@@ -87,15 +96,22 @@ func main() {
 	employee := apiV.Group("/employee")
 	employee.Use(middleware.JWTAuthMiddleware)
 	{
-		// CRUD
-		employee.GET("", empHandler.GetAll)
-		employee.POST("", empHandler.Add)
-		employee.PUT("/:nip", empHandler.UpdateEmployee)
-		employee.POST("/uploadpp/:nip", empHandler.UploadPP)
-		employee.GET("/:nip", empHandler.GetByNIP)
-		employee.GET("/unit/:unit_id", empHandler.GetByUnit)
-		employee.GET("/search", empHandler.Search)
-		employee.PUT("/promote/:nip", empHandler.Promote)
+		// Basic CRUD
+		employee.GET("", empHandler.GetAll)              // GET /employees
+		employee.POST("", empHandler.Add)                // POST /employees
+		employee.GET("/:nip", empHandler.GetByNIP)       // GET /employees/:nip
+		employee.PUT("/:nip", empHandler.UpdateEmployee) // PUT /employees/:nip
+
+		// Upload profile picture
+		employee.POST("/:nip/profile-picture", empHandler.UploadPP) // POST /employees/:nip/profile-picture
+
+		// Filtering
+		employee.GET("/unit/:unit_id", empHandler.GetByUnit) // GET /employees/unit/:unit_id
+		employee.GET("/search", empHandler.Search)           // GET /employees/search
+
+		// Promotion
+		employee.PUT("/:nip/promote", empHandler.Promote) // PUT /employees/:nip/promote
+
 	}
 
 	me := apiV.Group("/me")
@@ -103,7 +119,18 @@ func main() {
 	{
 		me.GET("", meHandler.GetMe)
 		me.PUT("", meHandler.UpdateMe)
-		me.POST("/uploadpp", meHandler.UploadPPMe)
+		me.POST("/profile-picture", meHandler.UploadPPMe)
+	}
+
+	print := apiV.Group("/print")
+	print.Use(middleware.JWTAuthMiddleware)
+	{
+		printEmp := print.Group("/employee")
+		{
+			printEmp.GET("/:nip", printHandler.PrintByNIP)
+			printEmp.GET("/unit/:unit_id", printHandler.PrintByUnitID)
+			printEmp.GET("/all", printHandler.PrintAll)
+		}
 	}
 
 	// ========================== Start HTTP API =========================

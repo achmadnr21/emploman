@@ -19,7 +19,7 @@ func NewEmployeeRepository(db *sql.DB) *EmployeeRepository {
 
 func (r *EmployeeRepository) FindAll() ([]domain.Employee, error) {
 	query := `SELECT id, role_id, nip, password, full_name, place_of_birth, date_of_birth,
-	gender, phone_number, photo_url, address, npwp, grade_id, religion_id,
+	gender, phone_number, photo_url, address, coalesce(npwp, '-') as npwp, grade_id, religion_id,
 	echelon_id, created_at, modified_at FROM achmadnr.employees`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -45,7 +45,7 @@ func (r *EmployeeRepository) FindAll() ([]domain.Employee, error) {
 }
 func (r *EmployeeRepository) FindByID(id string) (*domain.Employee, error) {
 	query := `SELECT id, role_id, nip, password, full_name, place_of_birth, date_of_birth,
-	gender, phone_number, photo_url, address, npwp, grade_id, religion_id,
+	gender, phone_number, photo_url, address, coalesce(npwp, '-') as npwp, grade_id, religion_id,
 	echelon_id, created_at, modified_at FROM achmadnr.employees WHERE id = $1`
 	row := r.db.QueryRow(query, id)
 	var employee *domain.Employee = &domain.Employee{}
@@ -65,7 +65,7 @@ func (r *EmployeeRepository) FindByID(id string) (*domain.Employee, error) {
 }
 func (r *EmployeeRepository) Save(employee *domain.Employee) (*domain.Employee, error) {
 	query := `INSERT INTO achmadnr.employees (role_id, nip, password, full_name, place_of_birth,
-	date_of_birth, gender, phone_number, photo_url, address, npwp, grade_id,
+	date_of_birth, gender, phone_number, photo_url, address, coalesce(npwp, '-') as npwp, grade_id,
 	religion_id, echelon_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
 	$11, $12, $13, $14) RETURNING id, created_at, modified_at`
 	err := r.db.QueryRow(query, employee.RoleID, employee.NIP, employee.Password,
@@ -122,7 +122,7 @@ func (r *EmployeeRepository) Delete(id string) error {
 }
 func (r *EmployeeRepository) FindByNIP(nip string) (*domain.Employee, error) {
 	query := `SELECT id, role_id, nip, password, full_name, place_of_birth, date_of_birth, gender,
-	phone_number, photo_url, address, npwp, grade_id, religion_id,
+	phone_number, photo_url, address, coalesce(npwp, '-') as npwp, grade_id, religion_id,
 	echelon_id, created_at, modified_at FROM achmadnr.employees WHERE nip = $1`
 	row := r.db.QueryRow(query, nip)
 	var employee *domain.Employee = &domain.Employee{}
@@ -143,7 +143,7 @@ func (r *EmployeeRepository) FindByNIP(nip string) (*domain.Employee, error) {
 
 func (r *EmployeeRepository) FindByName(name string) ([]domain.Employee, error) {
 	query := `SELECT id, role_id, nip, password, full_name, place_of_birth, date_of_birth, gender,
-	phone_number, photo_url, address, npwp, grade_id, religion_id,
+	phone_number, photo_url, address, coalesce(npwp, '-') as npwp, grade_id, religion_id,
 	echelon_id, created_at, modified_at FROM achmadnr.employees WHERE full_name ILIKE '%' || $1 || '%'`
 	rows, err := r.db.Query(query, name)
 	if err != nil {
@@ -170,7 +170,7 @@ func (r *EmployeeRepository) FindByName(name string) ([]domain.Employee, error) 
 
 func (r *EmployeeRepository) FindByUnit(unitID int) ([]domain.Employee, error) {
 	query := `SELECT e.id, e.role_id, e.nip, e.password, e.full_name, e.place_of_birth, e.date_of_birth, e.gender,
-	e.phone_number, e.photo_url, e.address, e.npwp, e.grade_id, e.religion_id,
+	e.phone_number, e.photo_url, e.address, coalesce(e.npwp, '-') as npwp, e.grade_id, e.religion_id,
 	e.echelon_id, e.created_at, e.modified_at
 	FROM achmadnr.employees e 
 	right join achmadnr.employee_assignments ea on e.id = ea.employee_id
@@ -199,7 +199,7 @@ func (r *EmployeeRepository) FindByUnit(unitID int) ([]domain.Employee, error) {
 }
 func (r *EmployeeRepository) Search(input string) ([]domain.Employee, error) {
 	query := `SELECT id, role_id, nip, password, full_name, place_of_birth, date_of_birth, gender,
-	phone_number, photo_url, address, npwp, grade_id, religion_id,
+	phone_number, photo_url, address, coalesce(npwp, '-') as npwp, grade_id, religion_id,
 	echelon_id, created_at, modified_at FROM achmadnr.employees WHERE nip = $1 OR full_name ILIKE '%' || $1 || '%'`
 	rows, err := r.db.Query(query, input)
 	if err != nil {
@@ -223,3 +223,23 @@ func (r *EmployeeRepository) Search(input string) ([]domain.Employee, error) {
 	}
 	return employees, nil
 }
+
+/*
+type PrintEmployee struct {
+	NIP          string    `json:"nip"`
+	FullName     string    `json:"full_name"`
+	PlaceOfBirth string    `json:"place_of_birth"`
+	Address      string    `json:"address"`
+	DateOfBirth  time.Time `json:"date_of_birth"`
+	Gender       string    `json:"gender"`
+	Grade        string    `json:"golongan"`
+	Echelon      string    `json:"echelon"`
+	Jabatan      string    `json:"jabatan"`
+	TempatTugas  string    `json:"tempat_tugas"`
+	Religion     string    `json:"religion"`
+	Unit         string    `json:"unit_kerja"`
+	PhoneNumber  string    `json:"phone_number"`
+	PhotoURL     string    `json:"photo_url"`
+	NPWP         string    `json:"npwp"`
+}
+*/
