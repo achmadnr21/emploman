@@ -63,7 +63,7 @@ func (r *PositionRepository) Save(position *domain.Position) (*domain.Position, 
 	return position, nil
 }
 func (r *PositionRepository) Update(position *domain.Position) (*domain.Position, error) {
-	query := `UPDATE achmadnr.positions SET name = $1 WHERE id = $2`
+	query := `UPDATE achmadnr.positions SET name = $1, modified_at = now() WHERE id = $2`
 	_, err := r.db.Exec(query, position.Name, position.ID)
 	if err != nil {
 		return nil, err
@@ -106,5 +106,30 @@ func (r *PositionRepository) FindByName(name string) ([]domain.Position, error) 
 		positions = append(positions, position)
 	}
 
+	return positions, nil
+}
+
+func (r *PositionRepository) Search(query string) ([]domain.Position, error) {
+	query = fmt.Sprintf("%%%s%%", query)
+	sqlQuery := `SELECT id, name, created_at, modified_at FROM achmadnr.positions WHERE name ILIKE $1`
+	rows, err := r.db.Query(sqlQuery, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var positions []domain.Position
+	for rows.Next() {
+		var position domain.Position
+		if err := rows.Scan(
+			&position.ID,
+			&position.Name,
+			&position.CreatedAt,
+			&position.ModifiedAt,
+		); err != nil {
+			return nil, err
+		}
+		positions = append(positions, position)
+	}
 	return positions, nil
 }

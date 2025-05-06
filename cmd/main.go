@@ -63,7 +63,7 @@ func main() {
 	// echelonRepo := repository.NewEchelonRepository(db)
 	employeeRepo := repository.NewEmployeeRepository(db)
 	unitRepo := repository.NewUnitRepository(db)
-	// positionRepo := repository.NewPositionRepository(db)
+	positionRepo := repository.NewPositionRepository(db)
 	// employeeAssignmentRepo := repository.NewEmployeeAssignmentRepository(db)
 	s3Repo := repository.NewS3Repository(s3client, sc.S3bucket)
 	printRepo := repository.NewPrintRepository(db)
@@ -74,6 +74,7 @@ func main() {
 	meUsecase := usecase.NewMeUsecase(employeeRepo, roleRepo, unitRepo, s3Repo)
 	printUsecase := usecase.NewPrintUsecase(printRepo, employeeRepo, roleRepo, unitRepo)
 	unitUsecase := usecase.NewUnitUsecase(unitRepo, roleRepo)
+	positionUsecase := usecase.NewPositionUsecase(positionRepo, roleRepo)
 
 	// Handler initialization
 	authHandler := handler.NewAuthHandler(authUsecase)
@@ -81,6 +82,7 @@ func main() {
 	meHandler := handler.NewMeHandler(meUsecase)
 	printHandler := handler.NewPrintHandler(printUsecase)
 	unitHandler := handler.NewUnitHandler(unitUsecase)
+	positionHandler := handler.NewPositionHandler(positionUsecase)
 
 	// ========================= API Routing =========================
 
@@ -136,6 +138,61 @@ func main() {
 		unit.DELETE("/:id", unitHandler.DeleteUnit)
 		unit.GET("/search", unitHandler.SearchUnit) // GET /units/search
 	}
+	// 5. position Management
+	position := apiV.Group("/position")
+	position.Use(middleware.JWTAuthMiddleware)
+	{
+		position.GET("", positionHandler.GetAllPosition) // GET /positions
+		position.POST("", positionHandler.AddPosition)   // POST /positions
+		position.GET("/:id", positionHandler.GetPositionByID)
+		position.PUT("/:id", positionHandler.UpdatePosition)
+		position.DELETE("/:id", positionHandler.DeletePosition)
+		position.GET("/search", positionHandler.SearchPosition) // GET /positions/search
+	}
+	// 6. Religion Management
+	// religion := apiV.Group("/religion")
+	// religion.Use(middleware.JWTAuthMiddleware)
+	// {
+	// 	religion.GET("", religionHandler.GetAllReligion) // GET /religions
+	// 	religion.POST("", religionHandler.AddReligion)   // POST /religions
+	// 	religion.GET("/:id", religionHandler.GetReligionByID)
+	// 	religion.PUT("/:id", religionHandler.UpdateReligion)
+	// 	religion.DELETE("/:id", religionHandler.DeleteReligion)
+	// 	religion.GET("/search", religionHandler.SearchReligion) // GET /religions/search
+	// }
+	// 7. Grade Management
+	// grade := apiV.Group("/grade")
+	// grade.Use(middleware.JWTAuthMiddleware)
+	// {
+	// 	grade.GET("", gradeHandler.GetAllGrade) // GET /grades
+	// 	grade.POST("", gradeHandler.AddGrade)   // POST /grades
+	// 	grade.GET("/:id", gradeHandler.GetGradeByID)
+	// 	grade.PUT("/:id", gradeHandler.UpdateGrade)
+	// 	grade.DELETE("/:id", gradeHandler.DeleteGrade)
+	// 	grade.GET("/search", gradeHandler.SearchGrade) // GET /grades/search
+	// }
+	// 8. Echelon Management
+	// echelon := apiV.Group("/echelon")
+	// echelon.Use(middleware.JWTAuthMiddleware)
+	// {
+	// 	echelon.GET("", echelonHandler.GetAllEchelon) // GET /echelons
+	// 	echelon.POST("", echelonHandler.AddEchelon)   // POST /echelons
+	// 	echelon.GET("/:id", echelonHandler.GetEchelonByID)
+	// 	echelon.PUT("/:id", echelonHandler.UpdateEchelon)
+	// 	echelon.DELETE("/:id", echelonHandler.DeleteEchelon)
+	// 	echelon.GET("/search", echelonHandler.SearchEchelon) // GET /echelons/search
+	// }
+	// // 9. Role Management
+	// role := apiV.Group("/role")
+	// role.Use(middleware.JWTAuthMiddleware)
+	// {
+	// 	role.GET("", authHandler.GetAllRole) // GET /roles
+	// 	role.POST("", authHandler.AddRole)   // POST /roles
+	// 	role.GET("/:id", authHandler.GetRoleByID)
+	// 	role.PUT("/:id", authHandler.UpdateRole)
+	// 	role.DELETE("/:id", authHandler.DeleteRole)
+	// 	role.GET("/search", authHandler.SearchRole) // GET /roles/search
+	// }
 
 	// 100. Print Management
 	print := apiV.Group("/print")

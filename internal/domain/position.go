@@ -17,4 +17,5 @@ type PositionInterface interface {
 	Update(position *Position) (*Position, error)
 	Delete(id int) error
 	FindByName(name string) ([]Position, error)
+	Search(query string) ([]Position, error)
 }
