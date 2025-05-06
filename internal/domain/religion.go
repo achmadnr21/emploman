@@ -12,10 +12,10 @@ type Religion struct {
 }
 
 type ReligionInterface interface {
-	FindAll() ([]Religion, error)
-	FindByID(id string) (*Religion, error)
 	Save(religion *Religion) (*Religion, error)
 	Update(religion *Religion) (*Religion, error)
 	Delete(id string) error
+	FindAll() ([]Religion, error)
+	FindByID(id string) (*Religion, error)
 	FindByName(name string) ([]Religion, error)
 }

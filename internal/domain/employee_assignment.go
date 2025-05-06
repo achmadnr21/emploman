@@ -14,12 +14,23 @@ type EmployeeAssignment struct {
 	ModifiedAt time.Time `json:"modified_at" db:"modified_at"`
 }
 
+type EmployeeAssignmentResponse struct {
+	EmployeeID   string    `json:"employee_id"`
+	UnitID       int       `json:"unit_id"`
+	PositionID   int       `json:"position_id"`
+	EmployeeName string    `json:"employee_name"`
+	UnitName     string    `json:"unit_name"`
+	PositionName string    `json:"position_name"`
+	IsActive     bool      `json:"is_active"`
+	AssignedAt   time.Time `json:"assigned_at"`
+}
+
 type EmployeeAssignmentInterface interface {
-	FindAll() ([]EmployeeAssignment, error)
-	FindByID(employeeID string, unitID int, positionID int) (*EmployeeAssignment, error)
 	Save(employeeAssignment *EmployeeAssignment) (*EmployeeAssignment, error)
 	Update(employeeAssignment *EmployeeAssignment) (*EmployeeAssignment, error)
 	Delete(employeeID string, unitID int, positionID int) error
-	FindByEmployeeID(employeeID string) (*EmployeeAssignment, error)
-	FindByUnitID(unitID int) ([]EmployeeAssignment, error)
+	FindAll() ([]EmployeeAssignmentResponse, error)
+	FindByID(employeeID string, unitID int, positionID int) (*EmployeeAssignmentResponse, error)
+	FindByEmployeeID(employeeID string) (*EmployeeAssignmentResponse, error)
+	FindByUnitID(unitID int) ([]EmployeeAssignmentResponse, error)
 }

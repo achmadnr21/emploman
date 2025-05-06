@@ -78,7 +78,7 @@ func (h *EmployeeHandler) GetByUnit(c *gin.Context) {
 func (h *EmployeeHandler) Search(c *gin.Context) {
 	user_id, _ := c.Get("user_id")
 	var payload struct {
-		Input string `json:"input" binding:"required"`
+		Input string `json:"query" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, utils.ResponseError("Invalid input"))

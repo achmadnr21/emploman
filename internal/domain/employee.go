@@ -16,7 +16,7 @@ type Employee struct {
 	PhoneNumber  string    `json:"phone_number" db:"phone_number"`
 	PhotoURL     string    `json:"photo_url" db:"photo_url"`
 	Address      string    `json:"address" db:"address"`
-	NPWP         *string   `json:"npwp" db:"npwp"`
+	NPWP         string    `json:"npwp" db:"npwp"`
 	GradeID      int       `json:"grade_id" db:"grade_id"`
 	ReligionID   string    `json:"religion_id" db:"religion_id"`
 	EchelonID    int       `json:"echelon_id" db:"echelon_id"`

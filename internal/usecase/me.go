@@ -36,6 +36,7 @@ func (eu *MeUsecase) GetMe(proposerId string) (*domain.Employee, error) {
 	if err != nil {
 		return nil, &utils.NotFoundError{Message: "user not found"}
 	}
+	proposer.Password = "" // clear password for security
 	// return employee
 	return proposer, nil
 }
@@ -50,22 +51,23 @@ func (eu *MeUsecase) UpdateMe(proposerId string, employee *domain.Employee) (*do
 		// unauthorized in this endpoint
 		return nil, &utils.UnauthorizedError{Message: "user not authorized"}
 	}
-
+	// UpdateMe hanya membolehkan update data diri, yaitu:
+	// Phone Number, Address, Religion
 	// full name checking
-	if employee.FullName != "" && len(employee.FullName) > 3 && utils.IsAlpha(employee.FullName) {
-		proposer.FullName = employee.FullName
+	if employee.FullName != "" || len(employee.FullName) > 3 || utils.IsAlpha(employee.FullName) {
+		return nil, &utils.UnauthorizedError{Message: "user not authorized to change full name"}
 	}
 	// place of birth checking
-	if employee.PlaceOfBirth != "" && len(employee.PlaceOfBirth) > 3 && utils.IsAlpha(employee.PlaceOfBirth) {
-		proposer.PlaceOfBirth = employee.PlaceOfBirth
+	if employee.PlaceOfBirth != "" || len(employee.PlaceOfBirth) > 3 || utils.IsAlpha(employee.PlaceOfBirth) {
+		return nil, &utils.UnauthorizedError{Message: "user not authorized to change place of birth"}
 	}
 	// date of birth checking jika is Zero atau tidak ada isinya
 	if !employee.DateOfBirth.IsZero() {
-		proposer.DateOfBirth = employee.DateOfBirth
+		return nil, &utils.UnauthorizedError{Message: "user not authorized to change date of birth"}
 	}
 	// Gender checking
 	if employee.Gender != "" && len(employee.Gender) == 1 {
-		proposer.Gender = employee.Gender
+		return nil, &utils.UnauthorizedError{Message: "user not authorized to change gender"}
 	}
 	// phone number checking
 	if employee.PhoneNumber != "" && len(employee.PhoneNumber) > 6 && utils.IsNumeric(employee.PhoneNumber) {
@@ -76,12 +78,12 @@ func (eu *MeUsecase) UpdateMe(proposerId string, employee *domain.Employee) (*do
 		proposer.Address = employee.Address
 	}
 	// NPWP checking
-	if employee.NPWP != nil && len(*employee.NPWP) == 16 {
+	if employee.NPWP != "" && len(employee.NPWP) == 16 {
 		proposer.NPWP = employee.NPWP
 	}
 	// grade id checking
 	if employee.GradeID > 0 {
-		proposer.GradeID = employee.GradeID
+		return nil, &utils.UnauthorizedError{Message: "user not authorized to change grade"}
 	}
 	// religion id checking
 	if employee.ReligionID != "" && len(employee.ReligionID) == 3 {
@@ -89,15 +91,12 @@ func (eu *MeUsecase) UpdateMe(proposerId string, employee *domain.Employee) (*do
 	}
 	// echelon id checking
 	if employee.EchelonID > 0 {
-		proposer.EchelonID = employee.EchelonID
+		return nil, &utils.UnauthorizedError{Message: "user not authorized to change echelon"}
 	}
-
-	// print the existing employee
-	fmt.Println("updated existing employee : ", proposer)
 
 	newEmp, err := eu.empRepo.Update(proposer)
 	if err != nil {
-		return nil, &utils.InternalServerError{Message: "failed to update employee"}
+		return nil, &utils.InternalServerError{Message: "failed to update employee data"}
 	}
 	newEmp.Password = "" // clear password for security
 	return newEmp, nil

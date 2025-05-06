@@ -56,7 +56,7 @@ func (eu *EmployeeUsecase) UpdateEmployee(proposerId string, nip string, employe
 		existingEmployee.Address = employee.Address
 	}
 	// NPWP checking
-	if employee.NPWP != nil && len(*employee.NPWP) == 16 {
+	if employee.NPWP != "" && len(employee.NPWP) == 16 {
 		existingEmployee.NPWP = employee.NPWP
 	}
 	// grade id checking
@@ -92,6 +92,10 @@ func (eu *EmployeeUsecase) Promote(proposerId string, nip string, roleID string)
 	employeeRole := employee.RoleID
 	if err != nil {
 		return nil, &utils.NotFoundError{Message: "employee not found"}
+	}
+	// Jika proposerId == employeeId maka tidak boleh!
+	if proposer.ID == employee.ID {
+		return nil, &utils.UnauthorizedError{Message: "user not authorized"}
 	}
 	if employee.RoleID == roleID {
 		return nil, &utils.BadRequestError{Message: "employee already has this role"}

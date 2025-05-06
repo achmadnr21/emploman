@@ -42,6 +42,7 @@ type RolePromotion struct {
 }
 
 type RoleInterface interface {
+	FindByUserID(id string) (*Role, error)
 	FindAll() ([]Role, error)
 	FindByID(id string) (*Role, error)
 	Save(role *Role) (*Role, error)

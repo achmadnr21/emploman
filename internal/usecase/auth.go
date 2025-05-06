@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/achmadnr21/emploman/internal/domain"
@@ -23,9 +22,7 @@ func NewAuthUsecase(employeeRepo domain.EmployeeInterface, roleRepo domain.RoleI
 func (au *AuthUsecase) Login(nip, password string) (string, string, error) {
 	// Find employee by NIK
 	employee, err := au.EmpRepo.FindByNIP(nip)
-	fmt.Println("employee", employee)
 	if err != nil {
-		fmt.Println("error", err)
 		return "", "", &utils.NotFoundError{Message: "user not found"}
 	}
 	// Check password

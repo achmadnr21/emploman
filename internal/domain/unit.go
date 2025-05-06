@@ -20,4 +20,5 @@ type UnitInterface interface {
 	Update(unit *Unit) (*Unit, error)
 	Delete(id int) error
 	FindByName(name string) ([]Unit, error)
+	Search(query string) ([]Unit, error)
 }

@@ -73,12 +73,14 @@ func main() {
 	empUsecase := emp.NewEmployeeUsecase(employeeRepo, roleRepo, unitRepo, s3Repo)
 	meUsecase := usecase.NewMeUsecase(employeeRepo, roleRepo, unitRepo, s3Repo)
 	printUsecase := usecase.NewPrintUsecase(printRepo, employeeRepo, roleRepo, unitRepo)
+	unitUsecase := usecase.NewUnitUsecase(unitRepo, roleRepo)
 
 	// Handler initialization
 	authHandler := handler.NewAuthHandler(authUsecase)
 	empHandler := handler.NewEmployeeHandler(empUsecase)
 	meHandler := handler.NewMeHandler(meUsecase)
 	printHandler := handler.NewPrintHandler(printUsecase)
+	unitHandler := handler.NewUnitHandler(unitUsecase)
 
 	// ========================= API Routing =========================
 
@@ -114,6 +116,7 @@ func main() {
 
 	}
 
+	// 3. Me Management
 	me := apiV.Group("/me")
 	me.Use(middleware.JWTAuthMiddleware)
 	{
@@ -122,6 +125,19 @@ func main() {
 		me.POST("/profile-picture", meHandler.UploadPPMe)
 	}
 
+	// 4. Unit Management
+	unit := apiV.Group("/unit")
+	unit.Use(middleware.JWTAuthMiddleware)
+	{
+		unit.GET("", unitHandler.GetAllUnit) // GET /units
+		unit.POST("", unitHandler.AddUnit)   // POST /units
+		unit.GET("/:id", unitHandler.GetUnitByID)
+		unit.PUT("/:id", unitHandler.UpdateUnit)
+		unit.DELETE("/:id", unitHandler.DeleteUnit)
+		unit.GET("/search", unitHandler.SearchUnit) // GET /units/search
+	}
+
+	// 100. Print Management
 	print := apiV.Group("/print")
 	print.Use(middleware.JWTAuthMiddleware)
 	{

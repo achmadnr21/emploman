@@ -113,3 +113,30 @@ func (r *UnitRepository) FindByName(name string) ([]domain.Unit, error) {
 	}
 	return units, nil
 }
+
+func (r *UnitRepository) Search(query string) ([]domain.Unit, error) {
+	query = "%" + query + "%"
+	sqlQuery := `SELECT id, name, address, description, created_at, modified_at FROM achmadnr.units WHERE name ILIKE $1 OR address ILIKE $1 ILIKE $1`
+	rows, err := r.db.Query(sqlQuery, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var units []domain.Unit
+	for rows.Next() {
+		var unit domain.Unit
+		if err := rows.Scan(
+			&unit.ID,
+			&unit.Name,
+			&unit.Address,
+			&unit.Description,
+			&unit.CreatedAt,
+			&unit.ModifiedAt,
+		); err != nil {
+			return nil, err
+		}
+		units = append(units, unit)
+	}
+	return units, nil
+}

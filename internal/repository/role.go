@@ -28,6 +28,37 @@ func NewRoleRepository(db *sql.DB) *RoleRepository {
 		FindPromoteRole(promoterRoleID, fromRoleID, toRoleID string) (*RolePromotion, error)
 	}
 */
+func (r *RoleRepository) FindByUserID(id string) (*domain.Role, error) {
+	query := `SELECT r.id, r.name, r.level, r.description, r.can_add_role, r.can_add_employee, r.can_add_unit,
+	r.can_add_position, r.can_add_echelon, r.can_add_religion, r.can_add_grade, r.can_assign_employee_internal,
+	r.can_assign_employee_global, r.created_at, r.modified_at
+	FROM achmadnr.roles r
+	JOIN achmadnr.employees u ON r.id = u.role_id
+	WHERE u.id = $1`
+	row := r.db.QueryRow(query, id)
+	var role domain.Role
+	err := row.Scan(
+		&role.ID,
+		&role.Name,
+		&role.Level,
+		&role.Description,
+		&role.CanAddRole,
+		&role.CanAddEmployee,
+		&role.CanAddUnit,
+		&role.CanAddPosition,
+		&role.CanAddEchelon,
+		&role.CanAddReligion,
+		&role.CanAddGrade,
+		&role.CanAssignEmployeeInternal,
+		&role.CanAssignEmployeeGlobal,
+		&role.CreatedAt,
+		&role.ModifiedAt)
+	if err != nil {
+		fmt.Println("Error scanning role:", err)
+		return nil, err
+	}
+	return &role, nil
+}
 func (r *RoleRepository) FindAll() ([]domain.Role, error) {
 	query := `SELECT 
 	id, name, level, description, can_add_role, can_add_employee, can_add_unit, can_add_position, 
