@@ -36,9 +36,10 @@ func (eu *EmployeeUsecase) Add(proposerId string, employee *domain.Employee) (*d
 	employee.PhotoURL = "https://s3.nevaobjects.id/emploman/pictureprofile/defaultprofile.jpg"
 	// save employee
 	newEmployee, err := eu.empRepo.Save(employee)
-	newEmployee.Password = "" // clear password for security
+	// newEmployee.Password = "" // clear password for security
 	if err != nil {
 		return nil, &utils.InternalServerError{Message: "failed to save employee"}
 	}
+	newEmployee.Password = ""
 	return newEmployee, nil
 }
