@@ -1,6 +1,8 @@
 package usecase_employee
 
 import (
+	"fmt"
+
 	"github.com/achmadnr21/emploman/internal/domain"
 	"github.com/achmadnr21/emploman/internal/utils"
 )
@@ -38,6 +40,7 @@ func (eu *EmployeeUsecase) Add(proposerId string, employee *domain.Employee) (*d
 	newEmployee, err := eu.empRepo.Save(employee)
 	// newEmployee.Password = "" // clear password for security
 	if err != nil {
+		fmt.Println("Error saving employee:", err)
 		return nil, &utils.InternalServerError{Message: "failed to save employee"}
 	}
 	newEmployee.Password = ""

@@ -65,7 +65,7 @@ func (r *EmployeeRepository) FindByID(id string) (*domain.Employee, error) {
 }
 func (r *EmployeeRepository) Save(employee *domain.Employee) (*domain.Employee, error) {
 	query := `INSERT INTO achmadnr.employees (role_id, nip, password, full_name, place_of_birth,
-	date_of_birth, gender, phone_number, photo_url, address, coalesce(npwp, '-') as npwp, grade_id,
+	date_of_birth, gender, phone_number, photo_url, address, npwp, grade_id,
 	religion_id, echelon_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
 	$11, $12, $13, $14) RETURNING id, created_at, modified_at`
 	err := r.db.QueryRow(query, employee.RoleID, employee.NIP, employee.Password,
