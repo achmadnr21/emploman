@@ -17,107 +17,73 @@ func NewEmployeeAssignmentRepository(db *sql.DB) *EmployeeAssignmentRepository {
 	}
 }
 
-/*
--- DDL
+func (r *EmployeeAssignmentRepository) TransactionalAssignment(employeeAssignment *domain.EmployeeAssignment) error {
 
-create table achmadnr.employee_assignments(
-
-	employee_id uuid not null,
-	unit_id int not null,
-	position_id int not null,
-	is_active boolean not null,
-	assigned_at timestamp default now(),
-	created_at timestamp default now(),
-	modified_at timestamp default now(),
-	primary key(employee_id, position_id, unit_id),
-	foreign key(employee_id) references achmadnr.employees(id),
-	foreign key(unit_id) references achmadnr.units(id),
-	foreign key(position_id) references achmadnr.positions(id)
-
-);
-
-	type EmployeeAssignment struct {
-		EmployeeID string    `json:"employee_id" db:"employee_id"`
-		UnitID     int       `json:"unit_id" db:"unit_id"`
-		PositionID int       `json:"position_id" db:"position_id"`
-		IsActive   bool      `json:"is_active" db:"is_active"`
-		AssignedAt time.Time `json:"assigned_at" db:"assigned_at"`
-		CreatedAt  time.Time `json:"created_at" db:"created_at"`
-		ModifiedAt time.Time `json:"modified_at" db:"modified_at"`
-	}
-
-	type EmployeeAssignmentResponse struct {
-		EmployeeID   string    `json:"employee_id"`
-		UnitID       int       `json:"unit_id"`
-		PositionID   int       `json:"position_id"`
-		EmployeeName string    `json:"employee_name"`
-		UnitName     string    `json:"unit_name"`
-		PositionName string    `json:"position_name"`
-		IsActive     bool      `json:"is_active"`
-		AssignedAt   time.Time `json:"assigned_at"`
-	}
-
-	type EmployeeAssignmentInterface interface {
-		Save(employeeAssignment *EmployeeAssignment) (*EmployeeAssignment, error)
-		Update(employeeAssignment *EmployeeAssignment) (*EmployeeAssignment, error)
-		Delete(employeeID string, unitID int, positionID int) error
-		FindAll() ([]EmployeeAssignmentResponse, error)
-		FindByID(employeeID string, unitID int, positionID int) (*EmployeeAssignmentResponse, error)
-		FindByEmployeeID(employeeID string) (*EmployeeAssignmentResponse, error)
-		FindByUnitID(unitID int) ([]EmployeeAssignmentResponse, error)
-	}
-*/
-
-func (r *EmployeeAssignmentRepository) Save(employeeAssignment *domain.EmployeeAssignment) (*domain.EmployeeAssignment, error) {
-	query := `INSERT INTO achmadnr.employee_assignments (employee_id, unit_id, position_id, is_active) VALUES ($1, $2, $3, $4) RETURNING employee_id, assigned_at, created_at, modified_at`
-	err := r.db.QueryRow(query,
-		employeeAssignment.EmployeeID,
-		employeeAssignment.UnitID,
-		employeeAssignment.PositionID,
-		employeeAssignment.IsActive,
-	).Scan(&employeeAssignment.EmployeeID, &employeeAssignment.AssignedAt, &employeeAssignment.CreatedAt, &employeeAssignment.ModifiedAt)
-	if err != nil {
-		return nil, err
-	}
-
-	return employeeAssignment, nil
-}
-func (r *EmployeeAssignmentRepository) Update(employeeAssignment *domain.EmployeeAssignment) (*domain.EmployeeAssignment, error) {
-	query := `UPDATE achmadnr.employee_assignments SET unit_id = $1, position_id = $2, is_active = $3, assigned_at = $4, modified_at = NOW() WHERE employee_id = $5 AND unit_id = $6 AND position_id = $7`
-	_, err := r.db.Exec(query,
-		employeeAssignment.UnitID,
-		employeeAssignment.PositionID,
-		employeeAssignment.IsActive,
-		employeeAssignment.AssignedAt,
-		employeeAssignment.EmployeeID,
-		employeeAssignment.UnitID,
-		employeeAssignment.PositionID,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return employeeAssignment, nil
-}
-func (r *EmployeeAssignmentRepository) Delete(employeeID string, unitID int, positionID int) error {
-	query := `DELETE FROM achmadnr.employee_assignments WHERE employee_id = $1 AND unit_id = $2 AND position_id = $3`
-	res, err := r.db.Exec(query, employeeID, unitID, positionID)
+	tx, err := r.db.Begin() // e.db = *sql.DB, pastikan sudah ada
 	if err != nil {
 		return err
 	}
-	rowsAffected, err := res.RowsAffected()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+
+	// 1. Nonaktifkan assignment aktif (jika ada)
+	_, err = tx.Exec(`
+		UPDATE achmadnr.employee_assignments
+		SET is_active = FALSE, assigned_at = NOW()
+		WHERE employee_id = $1 AND is_active = TRUE
+	`, employeeAssignment.EmployeeID)
 	if err != nil {
 		return err
 	}
-	if rowsAffected == 0 {
-		return fmt.Errorf("no rows deleted")
+
+	// 2. Coba aktifkan kembali assignment lama
+	var dummy int
+	err = tx.QueryRow(`
+		WITH updated AS (
+			UPDATE achmadnr.employee_assignments
+			SET is_active = TRUE, assigned_at = NOW()
+			WHERE employee_id = $1 AND unit_id = $2 AND position_id = $3
+			RETURNING 1
+		)
+		SELECT 1 FROM updated LIMIT 1
+	`, employeeAssignment.EmployeeID, employeeAssignment.UnitID, employeeAssignment.PositionID).Scan(&dummy)
+
+	if err == sql.ErrNoRows {
+		// 3. Tidak ditemukan, insert baru
+		_, err = tx.Exec(`
+			INSERT INTO achmadnr.employee_assignments (
+				employee_id, unit_id, position_id, is_active, assigned_at
+			) VALUES ($1, $2, $3, TRUE, NOW())
+		`, employeeAssignment.EmployeeID, employeeAssignment.UnitID, employeeAssignment.PositionID)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (r *EmployeeAssignmentRepository) Deactivate(employeeID string, unitID int, positionID int) error {
+	// update is_active to false
+	query := `UPDATE achmadnr.employee_assignments SET is_active = FALSE, assigned_at = NOW() WHERE employee_id = $1 AND unit_id = $2 AND position_id = $3`
+	_, err := r.db.Exec(query, employeeID, unitID, positionID)
+	if err != nil {
+		return fmt.Errorf("failed to deactivate employee assignment: %w", err)
 	}
 
 	return nil
 }
 
 func (r *EmployeeAssignmentRepository) FindAll() ([]domain.EmployeeAssignmentResponse, error) {
-	query := `SELECT ea.employee_id, ea.unit_id, ea.position_id, ea.is_active, ea.assigned_at, e.name as employee_name, u.name as unit_name, p.name as position_name
+	query := `SELECT ea.employee_id, ea.unit_id, ea.position_id, ea.is_active, ea.assigned_at, e.full_name as employee_name, u.name as unit_name, p.name as position_name
 	FROM achmadnr.employee_assignments ea
 	INNER JOIN achmadnr.employees e ON ea.employee_id = e.id
 	INNER JOIN achmadnr.units u ON ea.unit_id = u.id
@@ -150,12 +116,14 @@ func (r *EmployeeAssignmentRepository) FindAll() ([]domain.EmployeeAssignmentRes
 	return employeeAssignments, nil
 }
 func (r *EmployeeAssignmentRepository) FindByID(employeeID string, unitID int, positionID int) (*domain.EmployeeAssignmentResponse, error) {
-	query := `SELECT ea.employee_id, ea.unit_id, ea.position_id, ea.is_active, ea.assigned_at, ea.created_at, ea.modified_at, e.name as employee_name, u.name as unit_name, p.name as position_name
+	query := `SELECT ea.employee_id, ea.unit_id, ea.position_id, ea.is_active, ea.assigned_at, ea.created_at, ea.modified_at, e.full_name as employee_name, u.name as unit_name, p.name as position_name
 	FROM achmadnr.employee_assignments ea
 	INNER JOIN achmadnr.employees e ON ea.employee_id = e.id
 	INNER JOIN achmadnr.units u ON ea.unit_id = u.id
 	INNER JOIN achmadnr.positions p ON ea.position_id = p.id
-	WHERE ea.employee_id = $1 AND ea.unit_id = $2 AND ea.position_id = $3`
+	WHERE ea.employee_id = $1 AND ea.unit_id = $2 AND ea.position_id = $3
+	ORDER BY ea.assigned_at DESC
+	LIMIT 1`
 	row := r.db.QueryRow(query, employeeID, unitID, positionID)
 	var employeeAssignment domain.EmployeeAssignmentResponse
 	if err := row.Scan(
@@ -173,12 +141,14 @@ func (r *EmployeeAssignmentRepository) FindByID(employeeID string, unitID int, p
 }
 
 func (r *EmployeeAssignmentRepository) FindByEmployeeID(employeeID string) (*domain.EmployeeAssignmentResponse, error) {
-	query := `SELECT ea.employee_id, ea.unit_id, ea.position_id, ea.is_active, ea.assigned_at, e.name as employee_name, u.name as unit_name, p.name as position_name
+	query := `SELECT ea.employee_id, ea.unit_id, ea.position_id, ea.is_active, ea.assigned_at, e.full_name as employee_name, u.name as unit_name, p.name as position_name
 	FROM achmadnr.employee_assignments ea
 	INNER JOIN achmadnr.employees e ON ea.employee_id = e.id
 	INNER JOIN achmadnr.units u ON ea.unit_id = u.id
 	INNER JOIN achmadnr.positions p ON ea.position_id = p.id
-	WHERE ea.employee_id = $1`
+	WHERE ea.employee_id = $1 
+	ORDER BY ea.assigned_at DESC
+	LIMIT 1`
 	row := r.db.QueryRow(query, employeeID)
 	var employeeAssignment domain.EmployeeAssignmentResponse
 	if err := row.Scan(
@@ -195,12 +165,13 @@ func (r *EmployeeAssignmentRepository) FindByEmployeeID(employeeID string) (*dom
 	return &employeeAssignment, nil
 }
 func (r *EmployeeAssignmentRepository) FindByUnitID(unitID int) ([]domain.EmployeeAssignmentResponse, error) {
-	query := `SELECT ea.employee_id, ea.unit_id, ea.position_id, ea.is_active, ea.assigned_at, e.name as employee_name, u.name as unit_name, p.name as position_name
+	query := `SELECT ea.employee_id, ea.unit_id, ea.position_id, ea.is_active, ea.assigned_at, e.full_name as employee_name, u.name as unit_name, p.name as position_name
 	FROM achmadnr.employee_assignments ea
 	INNER JOIN achmadnr.employees e ON ea.employee_id = e.id
 	INNER JOIN achmadnr.units u ON ea.unit_id = u.id
 	INNER JOIN achmadnr.positions p ON ea.position_id = p.id
-	WHERE ea.unit_id = $1`
+	WHERE ea.unit_id = $1
+	ORDER BY ea.assigned_at DESC`
 	rows, err := r.db.Query(query, unitID)
 	if err != nil {
 		return nil, err

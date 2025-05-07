@@ -26,9 +26,8 @@ type EmployeeAssignmentResponse struct {
 }
 
 type EmployeeAssignmentInterface interface {
-	Save(employeeAssignment *EmployeeAssignment) (*EmployeeAssignment, error)
-	Update(employeeAssignment *EmployeeAssignment) (*EmployeeAssignment, error)
-	Delete(employeeID string, unitID int, positionID int) error
+	TransactionalAssignment(employeeAssignment *EmployeeAssignment) error
+	Deactivate(employeeID string, unitID int, positionID int) error
 	FindAll() ([]EmployeeAssignmentResponse, error)
 	FindByID(employeeID string, unitID int, positionID int) (*EmployeeAssignmentResponse, error)
 	FindByEmployeeID(employeeID string) (*EmployeeAssignmentResponse, error)

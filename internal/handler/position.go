@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/achmadnr21/emploman/internal/domain"
+	"github.com/achmadnr21/emploman/internal/middleware"
 	"github.com/achmadnr21/emploman/internal/usecase"
 	"github.com/achmadnr21/emploman/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -14,15 +15,12 @@ type PositionHandler struct {
 	uc *usecase.PositionUsecase
 }
 
-func NewPositionHandler(uc *usecase.PositionUsecase) *PositionHandler {
-	return &PositionHandler{
+func NewPositionHandler(apiV *gin.RouterGroup, uc *usecase.PositionUsecase) {
+	positionHandler := &PositionHandler{
 		uc: uc,
 	}
-}
 
-/*
-position := apiV.Group("/position")
-
+	position := apiV.Group("/position")
 	position.Use(middleware.JWTAuthMiddleware)
 	{
 		position.GET("", positionHandler.GetAllPosition) // GET /positions
@@ -32,7 +30,7 @@ position := apiV.Group("/position")
 		position.DELETE("/:id", positionHandler.DeletePosition)
 		position.GET("/search", positionHandler.SearchPosition) // GET /positions/search
 	}
-*/
+}
 
 func (h *PositionHandler) AddPosition(c *gin.Context) {
 	user_id := c.MustGet("user_id").(string)

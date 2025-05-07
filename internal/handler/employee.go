@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/achmadnr21/emploman/internal/domain"
+	"github.com/achmadnr21/emploman/internal/middleware"
 	usecase "github.com/achmadnr21/emploman/internal/usecase/employee"
 	"github.com/achmadnr21/emploman/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -15,29 +16,33 @@ type EmployeeHandler struct {
 	uc *usecase.EmployeeUsecase
 }
 
-func NewEmployeeHandler(uc *usecase.EmployeeUsecase) *EmployeeHandler {
-	return &EmployeeHandler{
+func NewEmployeeHandler(apiV *gin.RouterGroup, uc *usecase.EmployeeUsecase) {
+	EmployeeHandler := &EmployeeHandler{
 		uc: uc,
+	}
+
+	employee := apiV.Group("/employee")
+	employee.Use(middleware.JWTAuthMiddleware)
+	{
+		// Basic CRUD
+		employee.GET("", EmployeeHandler.GetAll)              // GET /employees
+		employee.POST("", EmployeeHandler.Add)                // POST /employees
+		employee.GET("/:nip", EmployeeHandler.GetByNIP)       // GET /employees/:nip
+		employee.PUT("/:nip", EmployeeHandler.UpdateEmployee) // PUT /employees/:nip
+
+		// Upload profile picture
+		employee.POST("/:nip/profile-picture", EmployeeHandler.UploadPP) // POST /employees/:nip/profile-picture
+
+		// Filtering
+		employee.GET("/unit/:unit_id", EmployeeHandler.GetByUnit) // GET /employees/unit/:unit_id
+		employee.GET("/search", EmployeeHandler.Search)           // GET /employees/search
+
+		// Promotion
+		employee.PUT("/:nip/promote", EmployeeHandler.Promote) // PUT /employees/:nip/promote
+
 	}
 }
 
-/*
-employee.Use(middleware.JWTAuthMiddleware)
-
-	{
-		// CRUD
-		employee.GET("", empHandler.GetAll)
-		employee.POST("", empHandler.Add)
-		employee.PUT("/:nip", empHandler.UpdateEmployee)
-		employee.POST("/uploadpp/:nip", empHandler.UploadPP)
-		employee.GET("/:nip", empHandler.GetByNIP)
-		employee.GET("/unit/:unit_id", empHandler.GetByUnit)
-		employee.GET("/search", empHandler.Search)
-		employee.PUT("/uprole/:nip", empHandler.Promote)
-		employee.PUT("/downrole/:nip", empHandler.Demote)
-
-	}
-*/
 func (h *EmployeeHandler) GetAll(c *gin.Context) {
 	user_id, _ := c.Get("user_id")
 	employees, err := h.uc.GetAll(user_id.(string))
@@ -77,14 +82,13 @@ func (h *EmployeeHandler) GetByUnit(c *gin.Context) {
 
 func (h *EmployeeHandler) Search(c *gin.Context) {
 	user_id, _ := c.Get("user_id")
-	var payload struct {
-		Input string `json:"query" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, utils.ResponseError("Invalid input"))
+	// contoh endpoint: /employee/search?query=rudy traspac
+	query := c.Query("query")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, utils.ResponseError("Query is required"))
 		return
 	}
-	employees, err := h.uc.Search(user_id.(string), payload.Input)
+	employees, err := h.uc.Search(user_id.(string), query)
 	if err != nil {
 		c.JSON(utils.GetHTTPErrorCode(err), utils.ResponseError(err.Error()))
 		return

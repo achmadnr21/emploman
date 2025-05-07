@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/achmadnr21/emploman/internal/domain"
+	"github.com/achmadnr21/emploman/internal/middleware"
 	"github.com/achmadnr21/emploman/internal/usecase"
 	"github.com/achmadnr21/emploman/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -13,9 +14,17 @@ type MeHandler struct {
 	uc *usecase.MeUsecase
 }
 
-func NewMeHandler(uc *usecase.MeUsecase) *MeHandler {
-	return &MeHandler{
+func NewMeHandler(apiV *gin.RouterGroup, uc *usecase.MeUsecase) {
+	meHandler := &MeHandler{
 		uc: uc,
+	}
+
+	me := apiV.Group("/me")
+	me.Use(middleware.JWTAuthMiddleware)
+	{
+		me.GET("", meHandler.GetMe)
+		me.PUT("", meHandler.UpdateMe)
+		me.POST("/profile-picture", meHandler.UploadPPMe)
 	}
 }
 

@@ -1,17 +1,26 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/achmadnr21/emploman/internal/domain"
+	"github.com/achmadnr21/emploman/internal/middleware"
 	"github.com/achmadnr21/emploman/internal/usecase"
 	"github.com/achmadnr21/emploman/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
-/*
-// 4. Unit Management
+type UnitHandler struct {
+	uc *usecase.UnitUsecase
+}
+
+func NewUnitHandler(apiV *gin.RouterGroup, uc *usecase.UnitUsecase) {
+	unitHandler := &UnitHandler{
+		uc: uc,
+	}
+
 	unit := apiV.Group("/unit")
 	unit.Use(middleware.JWTAuthMiddleware)
 	{
@@ -21,16 +30,6 @@ import (
 		unit.PUT("/:id", unitHandler.UpdateUnit)
 		unit.DELETE("/:id", unitHandler.DeleteUnit)
 		unit.GET("/search", unitHandler.SearchUnit) // GET /units/search
-	}
-*/
-
-type UnitHandler struct {
-	uc *usecase.UnitUsecase
-}
-
-func NewUnitHandler(uc *usecase.UnitUsecase) *UnitHandler {
-	return &UnitHandler{
-		uc: uc,
 	}
 }
 func (h *UnitHandler) GetAllUnit(c *gin.Context) {
@@ -45,6 +44,7 @@ func (h *UnitHandler) AddUnit(c *gin.Context) {
 	userId, _ := c.Get("user_id")
 	var payload domain.Unit
 	if err := c.ShouldBindJSON(&payload); err != nil {
+		fmt.Println("error bind json", err)
 		c.JSON(http.StatusBadRequest, utils.ResponseError("Invalid input"))
 		return
 	}

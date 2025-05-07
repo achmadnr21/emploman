@@ -14,9 +14,16 @@ type AuthHandler struct {
 	uc *usecase.AuthUsecase
 }
 
-func NewAuthHandler(uc *usecase.AuthUsecase) *AuthHandler {
-	return &AuthHandler{
+func NewAuthHandler(apiV *gin.RouterGroup, uc *usecase.AuthUsecase) {
+
+	AuthHandler := &AuthHandler{
 		uc: uc,
+	}
+
+	auth := apiV.Group("/auth")
+	{
+		auth.POST("/login", AuthHandler.Login)
+		auth.POST("/refresh", AuthHandler.RefreshToken)
 	}
 }
 func (h *AuthHandler) Login(c *gin.Context) {

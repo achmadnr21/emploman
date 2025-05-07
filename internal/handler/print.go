@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/achmadnr21/emploman/internal/middleware"
 	usecase "github.com/achmadnr21/emploman/internal/usecase"
 	"github.com/achmadnr21/emploman/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -13,9 +14,20 @@ type PrintHandler struct {
 	uc *usecase.PrintUsecase
 }
 
-func NewPrintHandler(uc *usecase.PrintUsecase) *PrintHandler {
-	return &PrintHandler{
+func NewPrintHandler(apiV *gin.RouterGroup, uc *usecase.PrintUsecase) {
+	printHandler := &PrintHandler{
 		uc: uc,
+	}
+
+	print := apiV.Group("/print")
+	print.Use(middleware.JWTAuthMiddleware)
+	{
+		printEmp := print.Group("/employee")
+		{
+			printEmp.GET("/:nip", printHandler.PrintByNIP)
+			printEmp.GET("/unit/:unit_id", printHandler.PrintByUnitID)
+			printEmp.GET("/all", printHandler.PrintAll)
+		}
 	}
 }
 

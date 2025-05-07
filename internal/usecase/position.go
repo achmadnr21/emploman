@@ -27,6 +27,9 @@ func (uc *PositionUsecase) AddPosition(proposerId string, position *domain.Posit
 	if !proposerRole.CanAddPosition {
 		return nil, &utils.UnauthorizedError{Message: "You are not authorized to add position"}
 	}
+	if position.Name == "" || len(position.Name) < 5 {
+		return nil, &utils.BadRequestError{Message: "Position name must be at least 5 characters"}
+	}
 	// proses position
 	position, err = uc.positionRepo.Save(position)
 	if err != nil {

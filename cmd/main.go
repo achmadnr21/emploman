@@ -13,8 +13,6 @@ import (
 	"github.com/achmadnr21/emploman/internal/utils"
 	gin_api "github.com/achmadnr21/emploman/service"
 
-	"github.com/achmadnr21/emploman/internal/middleware"
-
 	"github.com/achmadnr21/emploman/internal/repository"
 
 	"github.com/achmadnr21/emploman/internal/usecase"
@@ -58,13 +56,13 @@ func main() {
 	// ========================= Dependency Injection =========================
 	// Repository initialization
 	roleRepo := repository.NewRoleRepository(db)
-	// religionRepo := repository.NewReligionRepository(db)
-	// gradeRepo := repository.NewGradeRepository(db)
-	// echelonRepo := repository.NewEchelonRepository(db)
+	religionRepo := repository.NewReligionRepository(db)
+	gradeRepo := repository.NewGradeRepository(db)
+	echelonRepo := repository.NewEchelonRepository(db)
 	employeeRepo := repository.NewEmployeeRepository(db)
 	unitRepo := repository.NewUnitRepository(db)
 	positionRepo := repository.NewPositionRepository(db)
-	// employeeAssignmentRepo := repository.NewEmployeeAssignmentRepository(db)
+	employeeAssignmentRepo := repository.NewEmployeeAssignmentRepository(db)
 	s3Repo := repository.NewS3Repository(s3client, sc.S3bucket)
 	printRepo := repository.NewPrintRepository(db)
 
@@ -75,137 +73,23 @@ func main() {
 	printUsecase := usecase.NewPrintUsecase(printRepo, employeeRepo, roleRepo, unitRepo)
 	unitUsecase := usecase.NewUnitUsecase(unitRepo, roleRepo)
 	positionUsecase := usecase.NewPositionUsecase(positionRepo, roleRepo)
-
+	employeeAssignmentUsecase := usecase.NewEmployeeAssignmentUsecase(employeeAssignmentRepo, employeeRepo, roleRepo, unitRepo, positionRepo)
+	religionUsecase := usecase.NewReligionUsecase(religionRepo, roleRepo)
+	gradeUsecase := usecase.NewGradeUsecase(gradeRepo, roleRepo)
+	echelonUsecase := usecase.NewEchelonUsecase(echelonRepo, roleRepo)
 	// Handler initialization
-	authHandler := handler.NewAuthHandler(authUsecase)
-	empHandler := handler.NewEmployeeHandler(empUsecase)
-	meHandler := handler.NewMeHandler(meUsecase)
-	printHandler := handler.NewPrintHandler(printUsecase)
-	unitHandler := handler.NewUnitHandler(unitUsecase)
-	positionHandler := handler.NewPositionHandler(positionUsecase)
+	handler.NewAuthHandler(apiV, authUsecase)
+	handler.NewEmployeeHandler(apiV, empUsecase)
+	handler.NewMeHandler(apiV, meUsecase)
+	handler.NewUnitHandler(apiV, unitUsecase)
+	handler.NewPositionHandler(apiV, positionUsecase)
+	handler.NewPrintHandler(apiV, printUsecase)
+	handler.NewEmployeeAssignmentHandler(apiV, employeeAssignmentUsecase)
+	handler.NewReligionHandler(apiV, religionUsecase)
+	handler.NewGradeHandler(apiV, gradeUsecase)
+	handler.NewEchelonHandler(apiV, echelonUsecase)
 
-	// ========================= API Routing =========================
-
-	// 0. Create Simple open Ping endpoint
 	apiV.GET("/ping", HandlePing)
-
-	// 1. Auth
-	auth := apiV.Group("/auth")
-	{
-		auth.POST("/login", authHandler.Login)
-		auth.POST("/refresh", authHandler.RefreshToken)
-	}
-
-	// 2. Employee Management (Admin)
-	employee := apiV.Group("/employee")
-	employee.Use(middleware.JWTAuthMiddleware)
-	{
-		// Basic CRUD
-		employee.GET("", empHandler.GetAll)              // GET /employees
-		employee.POST("", empHandler.Add)                // POST /employees
-		employee.GET("/:nip", empHandler.GetByNIP)       // GET /employees/:nip
-		employee.PUT("/:nip", empHandler.UpdateEmployee) // PUT /employees/:nip
-
-		// Upload profile picture
-		employee.POST("/:nip/profile-picture", empHandler.UploadPP) // POST /employees/:nip/profile-picture
-
-		// Filtering
-		employee.GET("/unit/:unit_id", empHandler.GetByUnit) // GET /employees/unit/:unit_id
-		employee.GET("/search", empHandler.Search)           // GET /employees/search
-
-		// Promotion
-		employee.PUT("/:nip/promote", empHandler.Promote) // PUT /employees/:nip/promote
-
-	}
-
-	// 3. Me Management
-	me := apiV.Group("/me")
-	me.Use(middleware.JWTAuthMiddleware)
-	{
-		me.GET("", meHandler.GetMe)
-		me.PUT("", meHandler.UpdateMe)
-		me.POST("/profile-picture", meHandler.UploadPPMe)
-	}
-
-	// 4. Unit Management
-	unit := apiV.Group("/unit")
-	unit.Use(middleware.JWTAuthMiddleware)
-	{
-		unit.GET("", unitHandler.GetAllUnit) // GET /units
-		unit.POST("", unitHandler.AddUnit)   // POST /units
-		unit.GET("/:id", unitHandler.GetUnitByID)
-		unit.PUT("/:id", unitHandler.UpdateUnit)
-		unit.DELETE("/:id", unitHandler.DeleteUnit)
-		unit.GET("/search", unitHandler.SearchUnit) // GET /units/search
-	}
-	// 5. position Management
-	position := apiV.Group("/position")
-	position.Use(middleware.JWTAuthMiddleware)
-	{
-		position.GET("", positionHandler.GetAllPosition) // GET /positions
-		position.POST("", positionHandler.AddPosition)   // POST /positions
-		position.GET("/:id", positionHandler.GetPositionByID)
-		position.PUT("/:id", positionHandler.UpdatePosition)
-		position.DELETE("/:id", positionHandler.DeletePosition)
-		position.GET("/search", positionHandler.SearchPosition) // GET /positions/search
-	}
-	// 6. Religion Management
-	// religion := apiV.Group("/religion")
-	// religion.Use(middleware.JWTAuthMiddleware)
-	// {
-	// 	religion.GET("", religionHandler.GetAllReligion) // GET /religions
-	// 	religion.POST("", religionHandler.AddReligion)   // POST /religions
-	// 	religion.GET("/:id", religionHandler.GetReligionByID)
-	// 	religion.PUT("/:id", religionHandler.UpdateReligion)
-	// 	religion.DELETE("/:id", religionHandler.DeleteReligion)
-	// 	religion.GET("/search", religionHandler.SearchReligion) // GET /religions/search
-	// }
-	// 7. Grade Management
-	// grade := apiV.Group("/grade")
-	// grade.Use(middleware.JWTAuthMiddleware)
-	// {
-	// 	grade.GET("", gradeHandler.GetAllGrade) // GET /grades
-	// 	grade.POST("", gradeHandler.AddGrade)   // POST /grades
-	// 	grade.GET("/:id", gradeHandler.GetGradeByID)
-	// 	grade.PUT("/:id", gradeHandler.UpdateGrade)
-	// 	grade.DELETE("/:id", gradeHandler.DeleteGrade)
-	// 	grade.GET("/search", gradeHandler.SearchGrade) // GET /grades/search
-	// }
-	// 8. Echelon Management
-	// echelon := apiV.Group("/echelon")
-	// echelon.Use(middleware.JWTAuthMiddleware)
-	// {
-	// 	echelon.GET("", echelonHandler.GetAllEchelon) // GET /echelons
-	// 	echelon.POST("", echelonHandler.AddEchelon)   // POST /echelons
-	// 	echelon.GET("/:id", echelonHandler.GetEchelonByID)
-	// 	echelon.PUT("/:id", echelonHandler.UpdateEchelon)
-	// 	echelon.DELETE("/:id", echelonHandler.DeleteEchelon)
-	// 	echelon.GET("/search", echelonHandler.SearchEchelon) // GET /echelons/search
-	// }
-	// // 9. Role Management
-	// role := apiV.Group("/role")
-	// role.Use(middleware.JWTAuthMiddleware)
-	// {
-	// 	role.GET("", authHandler.GetAllRole) // GET /roles
-	// 	role.POST("", authHandler.AddRole)   // POST /roles
-	// 	role.GET("/:id", authHandler.GetRoleByID)
-	// 	role.PUT("/:id", authHandler.UpdateRole)
-	// 	role.DELETE("/:id", authHandler.DeleteRole)
-	// 	role.GET("/search", authHandler.SearchRole) // GET /roles/search
-	// }
-
-	// 100. Print Management
-	print := apiV.Group("/print")
-	print.Use(middleware.JWTAuthMiddleware)
-	{
-		printEmp := print.Group("/employee")
-		{
-			printEmp.GET("/:nip", printHandler.PrintByNIP)
-			printEmp.GET("/unit/:unit_id", printHandler.PrintByUnitID)
-			printEmp.GET("/all", printHandler.PrintAll)
-		}
-	}
-
 	// ========================== Start HTTP API =========================
 	service_config := fmt.Sprintf(":%d", sc.ServicePort)
 	fmt.Printf("\nService running on port %s \n", service_config)
